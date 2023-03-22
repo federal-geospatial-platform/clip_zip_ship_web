@@ -1,0 +1,39 @@
+h1 {
+  color: red;
+}
+
+.accordion-group {
+  margin: 10px 0px;
+}
+
+.MuiAccordionSummary-content {
+  padding-left: 10px;
+}
+
+.MuiAccordion-root {
+  background-color: #005fcb52;
+}
+
+.MuiAccordion-root.accordion-theme  {
+  background-color: #0088cb78;
+}
+
+.accordion-theme ul {
+  cursor: pointer;
+}
+.accordion-theme.MuiAccordion-root {
+  box-shadow: none;
+}
+
+.need-help {
+  background-color: #e4b152;
+}
+
+.help-text {
+  font-size: smaller;
+}
+
+.loading-spinner {
+  position: relative;
+  margin: 50px 0px 70px 0px;
+}

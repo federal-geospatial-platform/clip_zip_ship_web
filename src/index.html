@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title></title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="">
+    <!-- <script src="https://canadian-geospatial-platform.github.io/geoview/public/cgpv-main.js"></script> -->
+    <script src="http://localhost:8081/cgpv-main.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <div
+        id="mapWM"
+        class="llwp-map"
+        style='height:100vh'
+        data-lang="en"
+        data-config="{
+            'map': {
+                'interaction': 'dynamic',
+                'viewSettings': {
+                    'zoom': 4,
+                    'minZoom': 2,
+                    'maxZoom': 12,
+                    'center': [-100, 60],
+                    'projection': 3978
+                },
+                'basemapOptions': {
+                    'basemapId': 'simple',
+                    'shaded': true,
+                    'labeled': false
+                },
+                'listOfGeoviewLayerConfig__': [
+                    {
+                        'geoviewLayerId': 'ogcFeatureLYR1',
+                        'geoviewLayerName': {
+                            'en': 'MProjects Inv Points'
+                        },
+                        'metadataAccessPath': {
+                            'en': 'http://localhost:5000'
+                        },
+                        'geoviewLayerType': 'ogcFeature',
+                        'listOfLayerEntryConfig': [
+                            {
+                                'layerId': 'cdem_mpi__major_projects_inventory_point'
+                            }
+                        ]
+                    },
+                    {
+                        'geoviewLayerId': 'ogcFeatureLYR2',
+                        'geoviewLayerName': {
+                            'en': 'MProjects Inv Lines'
+                        },
+                        'metadataAccessPath': {
+                            'en': 'http://localhost:5000'
+                        },
+                        'geoviewLayerType': 'ogcFeature',
+                        'listOfLayerEntryConfig': [
+                            {
+                                'layerId': 'cdem_mpi__major_projects_inventory_line'
+                            }
+                        ]
+                    }
+                ]
+            },
+            'theme': 'dark',
+            'components': ['app-bar', 'nav-bar', 'north-arrow', 'overview-map', 'footer-bar'],
+            'corePackages': [],
+            'corePackages___': ['layers-panel'],
+            'suportedLanguages': ['en', 'fr']
+            }"
+        >
+    </div>
+
+    <script>
+        cgpv.init(function () {
+            console.log("api is ready");
+        });
+    </script>
+</body>
+</html>

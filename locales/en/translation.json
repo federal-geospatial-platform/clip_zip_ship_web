@@ -1,0 +1,12 @@
+{
+  "czs": {
+    "clear": "Clear",
+    "list_feature_colls": "List of vector collections",
+    "list_coverage_colls": "List of raster collections",
+    "enter_email": "Enter your email",
+    "show_preview": "Show preview on map",
+    "extract_features": "Extract features",
+    "help_title":"Need help?",
+    "help_text":"Hi,<br/>To submit your dynamic data extraction request, you must meet the following 3 criterias in the order of your choice:<ol><li>Select one or many collections</li><li>Draw an extraction polygon on the map</li><li>Type in your email address</li></ol>"
+  }
+}

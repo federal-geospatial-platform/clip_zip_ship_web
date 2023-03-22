@@ -7,14 +7,14 @@ This is the main code for the Clip Zip Ship plugin for GeoView
 $ npm install
 ```
 
-### Run the project
-
-```
-$ npm run serve
-```
-
 ## Building the project
 
 ```
 $ npm run build
+```
+
+### Run the project
+
+```
+$ npm run start
 ```

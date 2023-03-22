@@ -31,4 +31,4 @@ $ npm run build
 $ npm run start
 ```
 
-In development mode, when it's running, make sure to launch the GeoView Core in parallel on port 8081 so the plugin can interact with source code, in dev, from GeoView core.
+In development mode, when it's running, make sure to launch the GeoView Core in parallel on port 8081 so the plugin can interact with source code, in dev, from GeoView core at http://localhost:8081/cgpv-main.js

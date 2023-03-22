@@ -1,6 +1,18 @@
 # Clip Zip Ship plugin for GeoView
 This is the main code for the Clip Zip Ship plugin for GeoView
 
+### First clone this repo
+
+```
+$ git clone https://github.com/ederal-geospatial-platform/geoview_core_czs.git
+```
+
+### Go to the directory of the cloned repo
+
+```
+cd geoview_core_czs
+```
+
 ### Install dependencies
 
 ```

@@ -1,2 +1,2 @@
-# geoview_core_czs
-The Clip Zip Ship plugin for GeoView
+# Clip Zip Ship plugin for GeoView
+This is the main code for the Clip Zip Ship plugin for GeoView

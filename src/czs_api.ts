@@ -58,7 +58,7 @@ export default class CZSAPI {
             })
         })
         .then((response) => {
-          // only process valid response
+          // Only process valid response
           if (response.status === 200) {
               response.json().then((data: PyGeoAPICollectionsResponsePayload) => {
                   // Resolve
@@ -96,7 +96,7 @@ export default class CZSAPI {
             method: "GET"
         })
         .then((response) => {
-            // only process valid response
+            // Only process valid response
             if (response.status === 200) {
             response.json().then((data: PyGeoAPIRecordsDataResponsePayload) => {
                 // Resolve
@@ -137,7 +137,7 @@ export default class CZSAPI {
             method: "GET"
         })
         .then((response) => {
-            // only process valid response
+            // Only process valid response
             if (response.status === 200) {
             response.json().then((data: PyGeoAPIRecordsDataResponsePayload) => {
                 // Resolve
@@ -183,7 +183,7 @@ export default class CZSAPI {
             })
         })
         .then((response) => {
-            // only process valid response
+            // Only process valid response
             if (response.status === 200) {
             response.json().then((data: any) => {
                 // Resolve

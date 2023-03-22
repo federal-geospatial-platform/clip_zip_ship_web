@@ -13,7 +13,7 @@ const App = (): JSX.Element => {
 
     // Fetch the cgpv module
 	const w = window as any;
-    const cgpv = w['cgpv']; 
+    const cgpv = w['cgpv'];
 	const { createElement: h, useState, useEffect, useCallback } = cgpv.react;
 
     useEffect(() => {

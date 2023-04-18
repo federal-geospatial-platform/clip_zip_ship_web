@@ -63,25 +63,25 @@ const CZSPanel = (): JSX.Element => {
     const [isLoading, _setIsLoading] = useState(false);
     const [isLoadingFeatures, _setIsLoadingFeatures] = useState(false);
 
-    // Style the container
-    const useStyles = makeStyles((theme: any) => ({
-        positionContainer: {
-            marginLeft: 75,
-            backgroundColor: '#fff',
-            padding: 10,
-            height: '100%',
-            'min-width': 400,
-            overflow: 'auto',
-            pointerEvents: 'initial',
-        },
-        listCollections: {
-            'padding-inline-start': 0,
-        }
-    }));
+    // // Style the container
+    // const useStyles = makeStyles((theme: any) => ({
+    //     positionContainer: {
+    //         marginLeft: 75,
+    //         backgroundColor: '#fff',
+    //         padding: 10,
+    //         height: '100%',
+    //         'min-width': 600,
+    //         overflow: 'auto',
+    //         pointerEvents: 'initial',
+    //     },
+    //     listCollections: {
+    //         'padding-inline-start': 0,
+    //     }
+    // }));
 
     // Get the classes for the styles
     //const defaultTheme = useTheme();
-    const classes = useStyles();
+    //const classes = useStyles();
 
     useEffect(() => {
         console.log("CZSPanel useEffect");

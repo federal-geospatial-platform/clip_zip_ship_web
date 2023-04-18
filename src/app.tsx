@@ -36,7 +36,7 @@ const App = (): JSX.Element => {
                 panelId: 'CZSPanelID',
                 title: 'Clip Zip Ship',
                 content: cgpv.react.createElement(CZSPanel),
-                width: 200,
+                width: 450,
             };
 
             // call an api function to add a panel with a button in the default group

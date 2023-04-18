@@ -1,6 +1,6 @@
 import CZSAPI, { PyGeoAPICollectionsCollectionResponsePayload,
                  PyGeoAPIRecordsResponsePayload,
-                 PyGeoAPICollectionsCollectionLinkResponsePayload } from './czs_api';
+                 PyGeoAPICollectionsCollectionLinkResponsePayload } from './czs_pygeoapi';
 import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
 
@@ -41,14 +41,12 @@ const CZSPanel = (): JSX.Element => {
     // Fetch the cgpv module
     const w = window as any;
     const cgpv = w['cgpv'];
-    const { api, react, types, ui, ol, olStyle, olInteraction, olFormat, useTranslation } = cgpv;
+    const { api, react, types, ui, useTranslation, draw: Draw } = cgpv;
     const { showMessage } = api;
-    const { geometryToWKT } = api.geoUtilities;
+    const { geometryToWKT, defaultDrawingStyle } = api.geoUtilities;
     const { createElement: h, useState, useEffect, useCallback } = react;
     const { makeStyles, useTheme } = ui;
     const { Button, CircularProgress, Accordion, CheckboxListAlex, TextField } = ui.elements;
-    const { Draw, Modify, Snap} = olInteraction;
-    const { Style, Stroke, Fill, Circle } = olStyle;
 
     // Translation
     const { t, i18n } = useTranslation();
@@ -62,10 +60,6 @@ const CZSPanel = (): JSX.Element => {
     const [displayButtonState, _setDisplayButtonState] = useState({});
     const [extractButtonState, _setExtractButtonState] = useState({});
     const [email, _setEmail] = useState("alexandre.roy@nrcan-rncan.gc.ca");
-    //const [featuresCollections, _setFeaturesCollections] = useState([]);
-    //const [aoiConfirm, _setAOIConfirm] = useState(false);
-
-    // Show a loading spinner when collections are being loaded
     const [isLoading, _setIsLoading] = useState(false);
     const [isLoadingFeatures, _setIsLoadingFeatures] = useState(false);
 
@@ -89,10 +83,6 @@ const CZSPanel = (): JSX.Element => {
     //const defaultTheme = useTheme();
     const classes = useStyles();
 
-
-    let draw: typeof Draw;
-    let snap: typeof Snap;
-
     useEffect(() => {
         console.log("CZSPanel useEffect");
         console.log(types);
@@ -111,44 +101,49 @@ const CZSPanel = (): JSX.Element => {
                 // Load the collections off the bat
                 loadCollections();
 
-                // Create geometry group
+                // Create geometry group which will handle the drawing
                 let geomGrp = map.layer.vector.createGeometryGroup(geomGrpDrawID);
+
+                // Create geometry group which will handle the records results
                 let geomGrpRes = map.layer.vector.createGeometryGroup(geomGrpResultsID);
                 map.layer.vector.setActiveGeometryGroup(geomGrpResultsID);
 
+                // Init drawing, modifying and snapping interaction
+                const intDraw = map.initDrawInteractions(geomGrpDrawID, "Polygon");
+                const intModify = map.initModifyInteractions(geomGrpDrawID);
+
                 // Set the default styling for the vector layer
-                geomGrp.vectorLayer.setStyle(getDrawingStyle());
-
-                // The Vector source
-                let vectSource = geomGrp.vectorSource;
-
-                // Activate the OpenLayers Modify module
-                const modify = new Modify({
-                    source: vectSource,
-                    style: getDrawingStyle()
-                });
-                map.map.addInteraction(modify);
-
-                // Wire handler when drawing is changed
-                modify.on("modifyend", onDrawChange);
-
-                // Init interactions
-                initInteractions(map, vectSource);
+                geomGrp.vectorLayer.setStyle(defaultDrawingStyle('orange'));
             },
             mapID
         );
 
-        // Listen to the map click event
+        // Listen to the draw started event
         api.event.on(
-            api.eventNames.MAP.EVENT_MAP_SINGLE_CLICK,
+            api.eventNames.INTERACTION.EVENT_DRAW_STARTED,
             (payload: any) => {
-                //console.log("map clicked", payload);
+                // Redirect
+                onDrawStart();
+            },
+            mapID
+        ); // End "on" handler
 
-                // // Update the state
-                // if (payload.coordinates && payload.coordinates.lnglat) {
-                //     setLat(payload.coordinates.lnglat[0]);
-                //     setLng(payload.coordinates.lnglat[1]);
-                // }
+        // Listen to the draw ended event
+        api.event.on(
+            api.eventNames.INTERACTION.EVENT_DRAW_ENDED,
+            (payload: any) => {
+                // Redirect
+                onDrawEnd(payload.drawInfo);
+            },
+            mapID
+        ); // End "on" handler
+
+        // Listen to the modify ended event
+        api.event.on(
+            api.eventNames.INTERACTION.EVENT_MODIFY_ENDED,
+            (payload: any) => {
+                // Redirect
+                onDrawChange(payload.modifyInfo);
             },
             mapID
         ); // End "on" handler
@@ -156,74 +151,12 @@ const CZSPanel = (): JSX.Element => {
     }, []);
 
 
-    function initInteractions(map: any, vectSource: any) {
-        // Create the OL Draw component
-        draw = new Draw({
-          source: vectSource,
-          style: [getDrawingStyle()],
-          type: "Polygon",
-        });
-
-        // Wire handler when drawing starts
-        draw.on("drawstart", onDrawStart);
-        draw.on("drawend", onDrawEnd);
-
-        // Add drawing interaction on the map
-        map.map.addInteraction(draw);
-        snap = new Snap({
-            source: vectSource
-        });
-        map.map.addInteraction(snap);
-    }
-
-    function stopInteractions(olMap: any) {
-        if (draw)
-            olMap.removeInteraction(draw);
-        if (snap)
-            olMap.removeInteraction(snap);
-    }
-
-    // function getActiveGeometry() {
-    //     // Get vector source
-    //     const vectSource = cgpv.api.map(mapID).layer.vector.getGeometryGroup(geomGrpDrawID).vectorLayer.getSource();
-
-    //     // If any drawing
-    //     if (vectSource.getFeatures().length)
-    //         return vectSource.getFeatures()[0].getGeometry();
-    //     return undefined;
-    // }
-
     function getCheckedCollections() {
         let checkedcolls: string[] = [];
         Object.keys(checkedCollections).forEach((the_key: string) => {
             checkedcolls = checkedcolls.concat(checkedCollections[the_key]);
         });
         return checkedcolls;
-    }
-
-    function getDrawingStyle() {
-        return new Style({
-            stroke: new Stroke({
-              color: "orange",
-              width: 2
-            }),
-            fill: new Fill({
-              color: "transparent",
-              stroke: new Stroke({
-                color: "orange",
-                width: 2
-              }),
-            }),
-            image: new Circle({
-              radius: 4,
-              fill: new Fill({
-                color: "orange"
-              }),
-              stroke: new Stroke({
-                color: "orange"
-              })
-            })
-          });
     }
 
     function findCollectionFromID(collection_id: string): PyGeoAPICollectionsCollectionResponsePayload | null {
@@ -258,7 +191,7 @@ const CZSPanel = (): JSX.Element => {
     }
 
     function onDrawChange(e: any) {
-        //console.log("onDrawChange", e);
+        // Reset the geometry and reload the collections
         let geom = e.features.getArray()[0].getGeometry();
         loadCollections(geom);
     }
@@ -351,10 +284,10 @@ const CZSPanel = (): JSX.Element => {
                 promises.push(CZSAPI.getFeatures(coll_info, geometryWKT, 3978));
             }
 
-            // else if (coll_info?.itemType == "coverage") {
-            //     // Get the collection coverage
-            //     promises.push(CZSAPI.getCoverage(coll_info, geometryWKT, 3978));
-            // }
+            else if (coll_info?.itemType == "coverage") {
+                // Get the collection coverage
+                promises.push(CZSAPI.getCoverage(coll_info, geometryWKT, 3978));
+            }
 
             else {
                 console.log("SKIPPED COLLECTION TYPE", coll_info?.itemType);
@@ -376,7 +309,7 @@ const CZSPanel = (): JSX.Element => {
                             if (rec.geometry.type == "LineString")
                             {
                                 // add geometry to feature collection
-                                cgpv.api.map(mapID).layer.vector.addPolyline(rec.geometry.coordinates, {style: {strokeColor: "blue", strokeOpacity: 0.5, strokeWidth: 1}});
+                                cgpv.api.map(mapID).layer.vector.addPolyline(rec.geometry.coordinates, { projection: 3978, style: {strokeColor: "blue", strokeOpacity: 0.5, strokeWidth: 1}});
 
                                 // If was clipped too
                                 if (rec.geometry_clipped) {
@@ -390,7 +323,7 @@ const CZSPanel = (): JSX.Element => {
 
                                     // For each line segment
                                     rec.geometry_clipped.coordinates.forEach((coords: number[]) => {
-                                        cgpv.api.map(mapID).layer.vector.addPolyline(coords, {style: {strokeColor: "green", strokeWidth: 2}});
+                                        cgpv.api.map(mapID).layer.vector.addPolyline(coords, { projection: 3978, style: {strokeColor: "green", strokeWidth: 2}});
                                     });
                                 }
                             }
@@ -400,6 +333,7 @@ const CZSPanel = (): JSX.Element => {
                                 // add geometry to feature collection
                                 cgpv.api.map(mapID).layer.vector.addMarkerIcon(rec.geometry.coordinates,
                                     {
+                                        projection: 3978,
                                         style: {
                                             anchor: [0.5, 256],
                                             size: [256, 256],

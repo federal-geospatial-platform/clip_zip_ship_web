@@ -17,27 +17,31 @@ const App = (): JSX.Element => {
 	const { createElement: h, useState, useEffect, useCallback } = cgpv.react;
 
     useEffect(() => {
-
         console.log("App useEffect");
 
-        // Button
-        const button = {
-            id: 'AppbarPanelButtonId',
-            tooltip: 'Clip Zip Ship',
-            tooltipPlacement: 'right',
-            children: cgpv.react.createElement(cgpv.ui.elements.AppsIcon),
-        };
+        // Initialize the map
+        cgpv.init(function () {
+            console.log("api is ready");
 
-        // Panel
-        const panel = {
-            panelId: 'CZSPanelID',
-            title: 'Clip Zip Ship',
-            content: cgpv.react.createElement(CZSPanel),
-            width: 200,
-        };
+            // Button
+            const button = {
+                id: 'AppbarPanelButtonId',
+                tooltip: 'Clip Zip Ship',
+                tooltipPlacement: 'right',
+                children: cgpv.react.createElement(cgpv.ui.elements.AppsIcon),
+            };
 
-        // call an api function to add a panel with a button in the default group
-        cgpv.api.map(mapID).appBarButtons.createAppbarPanel(button, panel, null);
+            // Panel
+            const panel = {
+                panelId: 'CZSPanelID',
+                title: 'Clip Zip Ship',
+                content: cgpv.react.createElement(CZSPanel),
+                width: 200,
+            };
+
+            // call an api function to add a panel with a button in the default group
+            cgpv.api.map(mapID).appBarButtons.createAppbarPanel(button, panel, null);
+        });
 
     }, []);
 

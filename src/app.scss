@@ -3,7 +3,12 @@ h1 {
 }
 
 .accordion-group {
+  font-size: 0.9rem;
   margin: 10px 0px;
+}
+
+.accordion-group .MuiTypography-root {
+  font-size: inherit;
 }
 
 .MuiAccordionSummary-content {
@@ -34,6 +39,6 @@ h1 {
 }
 
 .loading-spinner {
-  position: relative;
+  position: relative !important;
   margin: 50px 0px 70px 0px;
 }

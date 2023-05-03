@@ -9,19 +9,17 @@ import CZSPanel from './czs_panel';
 const App = (): JSX.Element => {
 
     // The Map ID
-    const mapID = 'mapWM';
+    const mapID = 'mapCZS';
 
     // Fetch the cgpv module
 	const w = window as any;
     const cgpv = w['cgpv'];
-	const { createElement: h, useState, useEffect, useCallback } = cgpv.react;
+	const { useEffect } = cgpv.react;
 
     useEffect(() => {
-        console.log("App useEffect");
-
         // Initialize the map
         cgpv.init(function () {
-            console.log("api is ready");
+            //console.log("api is ready");
 
             // Button
             const button = {
@@ -34,7 +32,7 @@ const App = (): JSX.Element => {
             // Panel
             const panel = {
                 panelId: 'CZSPanelID',
-                title: 'Clip Zip Ship',
+                title: 'Clip Zip Ship (PRE-ALPHA BUILD)',
                 content: cgpv.react.createElement(CZSPanel),
                 width: 450,
             };

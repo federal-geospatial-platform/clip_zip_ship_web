@@ -11,6 +11,15 @@ h1 {
   font-size: inherit;
 }
 
+.Checkbox-content-root {
+  min-width: 90px;
+}
+
+.layer-metadata,
+.layer-order-layers {
+  display: inline-block;
+}
+
 .MuiAccordionSummary-content {
   padding-left: 10px;
 }
@@ -41,4 +50,20 @@ h1 {
 .loading-spinner {
   position: relative !important;
   margin: 50px 0px 70px 0px;
+}
+
+.SnackbarItem-contentRoot:not(.SnackbarItem-variantError):not(.SnackbarItem-variantWarning):not(.SnackbarItem-variantInfo):not(.SnackbarItem-variantSuccess) {
+  background-color: #e4b152 !important;
+}
+
+.layer-order-layers.loading {
+  cursor: default;
+  opacity: 0.4;
+}
+.layer-order-layers.loading a {
+  pointer-events: none;
+}
+
+.is-debug {
+  background-color: red;
 }

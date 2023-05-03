@@ -8,15 +8,16 @@ const { react, reactDOM } = w['cgpv'];
 // Check the html page language so that we load the application with the corresponding language
 const lang = document.documentElement.lang || 'en';
 
+// The Map ID
+const mapID = 'mapCZS';
+
 // The map config as json object for convenience; it's turned to string later for GeoView
 const map_config = {
 	'map': {
 		'interaction': 'dynamic',
 		'viewSettings': {
 			'zoom': 4,
-			'minZoom': 2,
-			'maxZoom': 12,
-			'center': [-100, 60],
+			'center': [-100, 50],
 			'projection': 3978
 		},
 		'basemapOptions': {
@@ -24,43 +25,11 @@ const map_config = {
 			'shaded': true,
 			'labeled': false
 		},
-		'listOfGeoviewLayerConfig__': [
-			{
-				'geoviewLayerId': 'ogcFeatureLYR1',
-				'geoviewLayerName': {
-					'en': 'MProjects Inv Points'
-				},
-				'metadataAccessPath': {
-					'en': 'http://localhost:5000'
-				},
-				'geoviewLayerType': 'ogcFeature',
-				'listOfLayerEntryConfig': [
-					{
-						'layerId': 'cdem_mpi__major_projects_inventory_point'
-					}
-				]
-			},
-			{
-				'geoviewLayerId': 'ogcFeatureLYR2',
-				'geoviewLayerName': {
-					'en': 'MProjects Inv Lines'
-				},
-				'metadataAccessPath': {
-					'en': 'http://localhost:5000'
-				},
-				'geoviewLayerType': 'ogcFeature',
-				'listOfLayerEntryConfig': [
-					{
-						'layerId': 'cdem_mpi__major_projects_inventory_line'
-					}
-				]
-			}
-		]
+		'listOfGeoviewLayerConfig': [{"geoviewLayerId":"cdem_alex__cdem","geoviewLayerName":{"en":"Canadian Digital Elevation Model, 1945-2011 - alex","fr":"Canadian Digital Elevation Model, 1945-2011 - alex"},"metadataAccessPath":{"en":"https://maps.geogratis.gc.ca/wms/hydro_network_en","fr":"https://maps.geogratis.gc.ca/wms/hydro_network_en"},"geoviewLayerType":"ogcWms","listOfLayerEntryConfig":[{"layerId":"hydro_network","layerName":{"en":"hydro_network","fr":"hydro_network"}}]}]
 	},
 	'theme': 'dark',
 	'components': ['app-bar', 'nav-bar', 'north-arrow', 'overview-map', 'footer-bar'],
-	'corePackages': [],
-	'corePackages___': ['layers-panel'],
+	'corePackages': ['layers-panel'],
 	'suportedLanguages': ['en', 'fr']
 };
 
@@ -70,7 +39,7 @@ reactDOM.render(
 	<react.StrictMode>
 		<App />
 		<div
-			id="mapWM"
+			id={mapID}
 			className="llwp-map"
 			style={{'height':'100vh'}}
 			data-lang={lang}

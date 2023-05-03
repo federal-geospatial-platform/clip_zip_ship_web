@@ -1,10 +1,10 @@
 {
   "czs": {
-    "clear": "Effacer",
+    "draw": "Dessiner une aire d'extraction",
+    "clear": "Effacer l'aire d'extraction",
     "list_feature_colls": "Liste des collections vectorielles",
     "list_coverage_colls": "Liste des collections matricielles",
     "enter_email": "Entrer votre adresse courriel",
-    "show_preview": "Voir un aperçu sur la carte",
     "extract_features": "Extraire les données",
     "help_title":"Besoin d'aide?",
     "help_text":"Bonjour,<br/>Pour soumettre votre demande d'extraction de données dynamique, il suffit de remplir les 3 conditions suivantes dans l'ordre que vous désirez:<ol><li>Sélectionner une ou plusieurs collections</li><li>Tracer un polygone de découpage sur la carte</li><li>Entrer votre adresse courriel</li></ol>"

@@ -5,10 +5,12 @@ import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
 
 // CONFIG
-const mapID ="mapWM";
+const mapID ="mapCZS";
 const geomGrpDrawID = "czs_geoms";
 const geomGrpResultsID = "czs_geoms_res";
+const QGIS_SERVICE_URL_ROOT = "https://qgis-stage.services.geo.ca/dev/";
 
+let drawInter: {stopInteraction: Function};
 
 export class ThemeCollectionsWrapper {
     features: ThemeCollections[] = [];
@@ -42,7 +44,8 @@ const CZSPanel = (): JSX.Element => {
     const w = window as any;
     const cgpv = w['cgpv'];
     const { api, react, types, ui, useTranslation, draw: Draw } = cgpv;
-    const { showMessage } = api;
+    //const { AbstractGeoViewLayer } = types; // TODO: This explodes in the core..
+    const { utilities } = api;
     const { geometryToWKT, defaultDrawingStyle } = api.geoUtilities;
     const { createElement: h, useState, useEffect, useCallback } = react;
     const { makeStyles, useTheme } = ui;
@@ -55,13 +58,17 @@ const CZSPanel = (): JSX.Element => {
     const [collectionsFeatures, _setCollectionsFeatures] = useState([]);
     const [collectionsCoverages, _setCollectionsCoverages] = useState([]);
     const [checkedCollections, _setCheckedCollections] = useState({});
+    const [viewedLayers, _setViewedLayers] = useState({});
+    const [geometry, _setGeometry] = useState();
     const [geometryWKT, _setGeometryWKT] = useState({});
     const [clearButtonState, _setClearButtonState] = useState({});
-    const [displayButtonState, _setDisplayButtonState] = useState({});
+    //const [displayButtonState, _setDisplayButtonState] = useState({});
     const [extractButtonState, _setExtractButtonState] = useState({});
     const [email, _setEmail] = useState("alexandre.roy@nrcan-rncan.gc.ca");
     const [isLoading, _setIsLoading] = useState(false);
     const [isLoadingFeatures, _setIsLoadingFeatures] = useState(false);
+    const [isOrderLoading, _setIsOrderLoading] = useState([]);
+    const [isDEBUG, _setIsDEBUG] = useState(false);
 
     // // Style the container
     // const useStyles = makeStyles((theme: any) => ({
@@ -84,8 +91,8 @@ const CZSPanel = (): JSX.Element => {
     //const classes = useStyles();
 
     useEffect(() => {
-        console.log("CZSPanel useEffect");
-        console.log(types);
+        //console.log("CZSPanel useEffect");
+        utilities.showMessage(mapID, "This is a pre-alpha release. Only for experimentation purposes.");
 
         // Add CZS translations file
         i18n.addResourceBundle("en", "translation", T_EN);
@@ -96,24 +103,26 @@ const CZSPanel = (): JSX.Element => {
             api.eventNames.MAP.EVENT_MAP_LOADED,
             (payload: any) => {
                 // The map
-                let map = cgpv.api.map(mapID);
+                const map = cgpv.api.map(mapID);
 
                 // Load the collections off the bat
-                loadCollections();
+                loadCollectionsAsync();
 
                 // Create geometry group which will handle the drawing
-                let geomGrp = map.layer.vector.createGeometryGroup(geomGrpDrawID);
+                const geomGrp = map.layer.vector.createGeometryGroup(geomGrpDrawID);
 
                 // Create geometry group which will handle the records results
-                let geomGrpRes = map.layer.vector.createGeometryGroup(geomGrpResultsID);
+                const geomGrpRes = map.layer.vector.createGeometryGroup(geomGrpResultsID);
                 map.layer.vector.setActiveGeometryGroup(geomGrpResultsID);
-
-                // Init drawing, modifying and snapping interaction
-                const intDraw = map.initDrawInteractions(geomGrpDrawID, "Polygon");
-                const intModify = map.initModifyInteractions(geomGrpDrawID);
 
                 // Set the default styling for the vector layer
                 geomGrp.vectorLayer.setStyle(defaultDrawingStyle('orange'));
+
+                // Make sure it'll always be on top of every layers
+                geomGrp.vectorLayer.setZIndex(1000);
+
+                // Init modify interaction
+                const modifInter = cgpv.api.map(mapID).initModifyInteractions(geomGrpDrawID);
             },
             mapID
         );
@@ -133,7 +142,7 @@ const CZSPanel = (): JSX.Element => {
             api.eventNames.INTERACTION.EVENT_DRAW_ENDED,
             (payload: any) => {
                 // Redirect
-                onDrawEnd(payload.drawInfo);
+                onDrawEndAsync(payload.drawInfo);
             },
             mapID
         ); // End "on" handler
@@ -143,7 +152,7 @@ const CZSPanel = (): JSX.Element => {
             api.eventNames.INTERACTION.EVENT_MODIFY_ENDED,
             (payload: any) => {
                 // Redirect
-                onDrawChange(payload.modifyInfo);
+                onDrawChangeAsync(payload.modifyInfo);
             },
             mapID
         ); // End "on" handler
@@ -179,10 +188,27 @@ const CZSPanel = (): JSX.Element => {
         return null;
     }
 
-    function onClearDrawing() {
+    async function onStartDrawingAsync() {
+        // Clear
+        onClearDrawingAsync();
+
+        // Init drawing interaction
+        drawInter = cgpv.api.map(mapID).initDrawInteractions(geomGrpDrawID, "Polygon");
+    }
+
+    function onStopDrawing() {
+        if (drawInter) {
+            drawInter.stopInteraction();
+        }
+    }
+
+    async function onClearDrawingAsync() {
         // Clear the geometries from the geometry group
         cgpv.api.map(mapID).layer.vector.deleteGeometriesFromGroup(geomGrpDrawID);
-        loadCollections();
+        // Stop drawing if currently drawing
+        onStopDrawing();
+        // Reload the collections from scratch
+        loadCollectionsAsync();
     }
 
     function onDrawStart() {
@@ -190,24 +216,32 @@ const CZSPanel = (): JSX.Element => {
         cgpv.api.map(mapID).layer.vector.deleteGeometriesFromGroup(geomGrpDrawID);
     }
 
-    function onDrawChange(e: any) {
+    async function onDrawChangeAsync(e: any) {
         // Reset the geometry and reload the collections
         let geom = e.features.getArray()[0].getGeometry();
-        loadCollections(geom);
+        loadCollectionsAsync(geom);
     }
 
-    function onDrawEnd(e: any) {
+    async function onDrawEndAsync(e: any) {
         //console.log("onDrawEnd", e);
         let geom = e.feature.getGeometry();
-        loadCollections(geom);
+        loadCollectionsAsync(geom);
+
+        // Stop the interaction
+        // TODO: Refactor: Delay the stoppage of the interaction, because we're handling it on the stop event of said interaction itself (prevents a double-click event)
+        setTimeout(() => {
+            // Stop drawing interaction
+            onStopDrawing();
+        });
     }
 
-    function loadCollections(geom?: any) {
+    async function loadCollectionsAsync(geom?: any) {
         // Get the geometry
         const geomWKT = geometryToWKT(geom);
         console.log("loadCollections", geomWKT);
 
         // Set the state
+        _setGeometry(geom);
         _setGeometryWKT(geomWKT);
         _setClearButtonState({active: !!geomWKT});
 
@@ -215,184 +249,197 @@ const CZSPanel = (): JSX.Element => {
         _setIsLoading(true);
 
         // Get the collections
-        CZSAPI.getCollectionsPOST(i18n.language + "-CA", geomWKT, 3978)
-        .then((colls: PyGeoAPICollectionsCollectionResponsePayload[]) => {
-            // Group the collections by types and then by themes
-            let collsWrapper = new ThemeCollectionsWrapper();
-            colls.forEach((collection: PyGeoAPICollectionsCollectionResponsePayload) => {
-                // Depending on the type
-                let themeColls: ThemeCollections[] | undefined;
-                if (collection.itemType == "feature") {
-                    themeColls = collsWrapper.features;
-                }
-
-                else if (collection.itemType == "coverage") {
-                    themeColls = collsWrapper.coverages;
-                }
-
-                // If found
-                if (themeColls) {
-                    // Find the theme
-                    let thmColl = themeColls?.find((thmCol: ThemeCollections) => {
-                        return thmCol.theme.id == collection.theme;
-                    });
-
-                    // If not found
-                    if (!thmColl) {
-                        thmColl = new ThemeCollections({
-                            id: collection.theme,
-                            name: collection.theme
-                        }, []);
-                        themeColls.push(thmColl);
-                    }
-
-                    // Add the collection to the ThemeCollections
-                    thmColl.collections.push(collection);
-                }
-            });
-
-            // Proceed to change the state
-            _setCollectionsFeatures(collsWrapper.features);
-            _setCollectionsCoverages(collsWrapper.coverages);
-
+        let colls: PyGeoAPICollectionsCollectionResponsePayload[] | void = await CZSAPI.getCollectionsPOSTAsync(i18n.language + "-CA", geomWKT, 3978).catch(_handleError).finally(() => {
             // Done loading
             _setIsLoading(false);
         });
-    }
+        if (!colls) return;
 
-    function callDisplayFeatures() {
-        //console.log("callDisplayFeatures", checkedCollections, geometryWKT);
-
-        // Is loading
-        _setIsLoadingFeatures(true);
-
-        // Clear the geometries from the geometry group
-        cgpv.api.map(mapID).layer.vector.deleteGeometriesFromGroup(geomGrpResultsID);
-
-        // Set the active geometry group
-        cgpv.api.map(mapID).layer.vector.setActiveGeometryGroup(geomGrpResultsID);
-
-        // For each checked collections
-        let promises : Promise<PyGeoAPIRecordsResponsePayload>[] = [];
-        getCheckedCollections().forEach((coll: string) => {
-            // Find the collection information for that collection id
-            let coll_info = findCollectionFromID(coll);
-
-            // Depending on the collection type
-            if (coll_info?.itemType == "feature") {
-                // Get the collection features
-                promises.push(CZSAPI.getFeatures(coll_info, geometryWKT, 3978));
+        // Group the collections by types and then by themes
+        let collsWrapper = new ThemeCollectionsWrapper();
+        colls.forEach((collection: PyGeoAPICollectionsCollectionResponsePayload) => {
+            // Depending on the type
+            let themeColls: ThemeCollections[] | undefined;
+            if (collection.itemType == "feature") {
+                themeColls = collsWrapper.features;
             }
 
-            else if (coll_info?.itemType == "coverage") {
-                // Get the collection coverage
-                promises.push(CZSAPI.getCoverage(coll_info, geometryWKT, 3978));
+            else if (collection.itemType == "coverage") {
+                themeColls = collsWrapper.coverages;
             }
 
-            else {
-                console.log("SKIPPED COLLECTION TYPE", coll_info?.itemType);
-            }
-        });
+            // If found
+            if (themeColls) {
+                // Find the theme
+                let thmColl = themeColls?.find((thmCol: ThemeCollections) => {
+                    return thmCol.theme.id == collection.theme;
+                });
 
-        // When all records found
-        Promise.all(promises).then((colls_res: PyGeoAPIRecordsResponsePayload[]) => {
-            // For each collection result
-            colls_res.forEach((coll_res: PyGeoAPIRecordsResponsePayload) => {
-                // If anything
-                console.log("Records", coll_res);
-                if (coll_res.data.features && coll_res.data.features.length > 0) {
-                    // Depending on the collection type
-                    if (coll_res.collection.itemType == "feature") {
-                        // For each records in the collection result
-                        coll_res.data.features.forEach((rec: any) => {
-                            // Depending on the geometry type
-                            if (rec.geometry.type == "LineString")
-                            {
-                                // add geometry to feature collection
-                                cgpv.api.map(mapID).layer.vector.addPolyline(rec.geometry.coordinates, { projection: 3978, style: {strokeColor: "blue", strokeOpacity: 0.5, strokeWidth: 1}});
-
-                                // If was clipped too
-                                if (rec.geometry_clipped) {
-                                    // If not multi line
-                                    if (!(Array.isArray(rec.geometry_clipped.coordinates[0]) &&
-                                        Array.isArray(rec.geometry_clipped.coordinates[0][0])))
-                                    {
-                                        // Make it a multi line for simplicity
-                                        rec.geometry_clipped.coordinates = [rec.geometry_clipped.coordinates];
-                                    }
-
-                                    // For each line segment
-                                    rec.geometry_clipped.coordinates.forEach((coords: number[]) => {
-                                        cgpv.api.map(mapID).layer.vector.addPolyline(coords, { projection: 3978, style: {strokeColor: "green", strokeWidth: 2}});
-                                    });
-                                }
-                            }
-
-                            else if (rec.geometry.type == "Point")
-                            {
-                                // add geometry to feature collection
-                                cgpv.api.map(mapID).layer.vector.addMarkerIcon(rec.geometry.coordinates,
-                                    {
-                                        projection: 3978,
-                                        style: {
-                                            anchor: [0.5, 256],
-                                            size: [256, 256],
-                                            scale: 0.1,
-                                            anchorXUnits: 'fraction',
-                                            anchorYUnits: 'pixels',
-                                            src: './img/Marker.png',
-                                        }
-                                    }
-                                );
-                            }
-
-                            else
-                            {
-                                // Error
-                                console.log("Unknown geometry type");
-                            }
-                        });
-                    }
-
-                    else {
-                        console.log("UNKNOWN COLLECTION TYPE", coll_res.collection.itemType, coll_res);
-                    }
+                // If not found
+                if (!thmColl) {
+                    thmColl = new ThemeCollections({
+                        id: collection.theme,
+                        name: collection.theme
+                    }, []);
+                    themeColls.push(thmColl);
                 }
-            });
 
-            // Done loading
-            _setIsLoadingFeatures(false);
-
-        }).catch((err: any) => {
-            console.log("ERROR", err);
-
-            // Done loading
-            _setIsLoadingFeatures(false);
+                // Add the collection to the ThemeCollections
+                thmColl.collections.push(collection);
+            }
         });
+
+        // Proceed to change the state
+        _setCollectionsFeatures(collsWrapper.features);
+        _setCollectionsCoverages(collsWrapper.coverages);
+
+        // Adjust the visibility of the currently selected layers
+        await adjustExtentOnVisibleLayersAsync(geom);
     }
 
-    function callExtractFeatures(email: string) {
+    async function adjustExtentOnVisibleLayersAsync(geom?: any) {
+        // For each visible layers
+        for (let layerID in viewedLayers) {
+            let lyr = await api.map(mapID).layer.getGeoviewLayerByIdAsync(layerID, false);
+            adjustExtentOnLayerID(lyr, geom);
+        }
+    }
+
+    function adjustExtentOnLayerID(layer: any, geom?: any) {
+        let ext = undefined;
+        if (geom) ext = geom.getExtent();
+        layer.setExtent(ext);
+        layer.setVisible(false);
+        layer.setVisible(true);
+    }
+
+    // function _OBSOLETE_callDisplayFeatures() {
+    //     //console.log("callDisplayFeatures", checkedCollections, geometryWKT);
+
+    //     // Is loading
+    //     _setIsLoadingFeatures(true);
+
+    //     // Clear the geometries from the geometry group
+    //     cgpv.api.map(mapID).layer.vector.deleteGeometriesFromGroup(geomGrpResultsID);
+
+    //     // Set the active geometry group
+    //     cgpv.api.map(mapID).layer.vector.setActiveGeometryGroup(geomGrpResultsID);
+
+    //     // For each checked collections
+    //     let promises : Promise<PyGeoAPIRecordsResponsePayload>[] = [];
+    //     getCheckedCollections().forEach((coll: string) => {
+    //         // Find the collection information for that collection id
+    //         let coll_info = findCollectionFromID(coll);
+
+    //         // Depending on the collection type
+    //         if (coll_info?.itemType == "feature") {
+    //             // Get the collection features
+    //             promises.push(CZSAPI.getFeaturesAsync(coll_info, geometryWKT, 3978));
+    //         }
+
+    //         else if (coll_info?.itemType == "coverage") {
+    //             // Get the collection coverage
+    //             promises.push(CZSAPI.getCoverageAsync(coll_info, geometryWKT, 3978));
+    //         }
+
+    //         else {
+    //             console.log("SKIPPED COLLECTION TYPE", coll_info?.itemType);
+    //         }
+    //     });
+
+    //     // When all records found
+    //     Promise.all(promises).then((colls_res: PyGeoAPIRecordsResponsePayload[]) => {
+    //         // For each collection result
+    //         colls_res.forEach((coll_res: PyGeoAPIRecordsResponsePayload) => {
+    //             // If anything
+    //             console.log("Records", coll_res);
+    //             if (coll_res.data.features && coll_res.data.features.length > 0) {
+    //                 // Depending on the collection type
+    //                 if (coll_res.collection.itemType == "feature") {
+    //                     // For each records in the collection result
+    //                     coll_res.data.features.forEach((rec: any) => {
+    //                         // Depending on the geometry type
+    //                         if (rec.geometry.type == "LineString")
+    //                         {
+    //                             // add geometry to feature collection
+    //                             cgpv.api.map(mapID).layer.vector.addPolyline(rec.geometry.coordinates, { projection: 3978, style: {strokeColor: "blue", strokeOpacity: 0.5, strokeWidth: 1}});
+
+    //                             // If was clipped too
+    //                             if (rec.geometry_clipped) {
+    //                                 // If not multi line
+    //                                 if (!(Array.isArray(rec.geometry_clipped.coordinates[0]) &&
+    //                                     Array.isArray(rec.geometry_clipped.coordinates[0][0])))
+    //                                 {
+    //                                     // Make it a multi line for simplicity
+    //                                     rec.geometry_clipped.coordinates = [rec.geometry_clipped.coordinates];
+    //                                 }
+
+    //                                 // For each line segment
+    //                                 rec.geometry_clipped.coordinates.forEach((coords: number[]) => {
+    //                                     cgpv.api.map(mapID).layer.vector.addPolyline(coords, { projection: 3978, style: {strokeColor: "green", strokeWidth: 2}});
+    //                                 });
+    //                             }
+    //                         }
+
+    //                         else if (rec.geometry.type == "Point")
+    //                         {
+    //                             // add geometry to feature collection
+    //                             cgpv.api.map(mapID).layer.vector.addMarkerIcon(rec.geometry.coordinates,
+    //                                 {
+    //                                     projection: 3978,
+    //                                     style: {
+    //                                         anchor: [0.5, 256],
+    //                                         size: [256, 256],
+    //                                         scale: 0.1,
+    //                                         anchorXUnits: 'fraction',
+    //                                         anchorYUnits: 'pixels',
+    //                                         src: './img/Marker.png',
+    //                                     }
+    //                                 }
+    //                             );
+    //                         }
+
+    //                         else
+    //                         {
+    //                             // Error
+    //                             console.log("Unknown geometry type");
+    //                         }
+    //                     });
+    //                 }
+
+    //                 else {
+    //                     console.log("UNKNOWN COLLECTION TYPE", coll_res.collection.itemType, coll_res);
+    //                 }
+    //             }
+    //         });
+
+    //         // Done loading
+    //         _setIsLoadingFeatures(false);
+
+    //     }).catch((err: any) => {
+    //         console.log("ERROR", err);
+
+    //         // Done loading
+    //         _setIsLoadingFeatures(false);
+    //     });
+    // }
+
+    async function callExtractFeaturesAsync(email: string) {
         //console.log("callExtractFeatures", checkedCollections, geometryWKT);
 
         // Is loading
         _setIsLoadingFeatures(true);
 
         // Extract the collections
-        CZSAPI.extractFeatures(getCheckedCollections(), email, geometryWKT, 3978)
-        .then((res: any) => {
-            // Show message to user
-            showMessage(mapID, "Extraction completed, check your emails!");
-            console.log("EXTRACTION RESULT", res);
-
-            // Done loading
-            _setIsLoadingFeatures(false);
-
-        }).catch((err: any) => {
-            console.log("ERROR", err);
-
-            // Done loading
+        let res = await CZSAPI.extractFeaturesAsync(getCheckedCollections(), email, geometryWKT, 3978).catch(_handleError).finally(() => {
+            // Stop loading
             _setIsLoadingFeatures(false);
         });
+        if (!res) return;
+
+        // Show message to user
+        utilities.showSuccess(mapID, "Extraction completed, check your emails!");
+        console.log("EXTRACTION RESULT", res);
     }
 
     function writeTitle(thmColl: ThemeCollections) {
@@ -419,27 +466,109 @@ const CZSPanel = (): JSX.Element => {
             return <CheckboxListAlex
                 multiselect={true}
                 listItems={Object.values(thmColl.collections).map((coll: PyGeoAPICollectionsCollectionResponsePayload) => {
-                    let link = getContentMetadata(coll.links);
                     return {
                         display: coll.title,
                         value: coll.id,
-                        content: link ? <a href={link.href} title={link.title} target='_blank'>
-                                <img src='./img/metadata.png' style={{
-                                    'width': '20px',
-                                    'height': '20px',
-                                    'marginTop': '2px',
-                                    'marginLeft': '5px',
-                                }}></img>
-                            </a> : ""
+                        content: getContentLayer(coll)
                     };
                 })}
                 checkedValues={(list_key + "_" + thmColl.theme.id in checkedCollections && checkedCollections[list_key + "_" + thmColl.theme.id]) || []}
-                checkedCallback={(value: string, checked: boolean, allChecked: Array<string>) => onCollectionCheckedChanged(list_key, thmColl, value, checked, allChecked)}
+                checkedCallback={(value: string, checked: boolean, allChecked: Array<string>) => onCollectionCheckedChangedAsync(list_key, thmColl, value, checked, allChecked)}
             ></CheckboxListAlex>;
         }
 
         else
             return null;
+    }
+
+    function getContentLayer(coll: PyGeoAPICollectionsCollectionResponsePayload) {
+        let link = getContentMetadata(coll.links);
+        let html_link: JSX.Element = <span></span>;
+        if (link) {
+            html_link = <div className="layer-metadata">
+                    <a href={link.href} title={link.title} target='_blank'>
+                        <img src='./img/metadata.png' style={{
+                            'width': '20px',
+                            'height': '20px',
+                            'marginTop': '2px',
+                            'marginLeft': '5px',
+                        }}></img>
+                    </a>
+                </div>;
+        }
+        let orders: JSX.Element = <span></span>;
+        if (viewedLayers.hasOwnProperty(coll.id)) {
+            orders = <div className={`layer-order-layers ${isOrderLoading.includes(coll.id) ? "loading" : ""}`}>
+                        <a onClick={ (e) => { _handleHigher(e, coll.id); } } title="Bring to front">
+                            <img src='./img/arrow_up.png' style={{
+                                'width': '20px',
+                                'height': '20px',
+                                'marginTop': '2px',
+                                'marginLeft': '5px',
+                            }}></img>
+                        </a>
+                        <a onClick={ (e) => { _handleLower(e, coll.id); } } title="Send to back">
+                            <img src='./img/arrow_down.png' style={{
+                                'width': '20px',
+                                'height': '20px',
+                                'marginTop': '2px',
+                                'marginLeft': '5px',
+                            }}></img>
+                        </a>
+                    </div>;
+        }
+        return <div>{html_link}{orders}</div>;
+    }
+
+    function _handleHigher(e: any, layerID: string) {
+        // Is loading
+        isOrderLoading.push(layerID);
+        _setIsOrderLoading([...isOrderLoading]);
+
+        // Go
+        higherAsync(layerID).finally(() => {
+            _setIsOrderLoading(isOrderLoading.filter(function (val: string) { return val !== layerID }));
+        });
+    }
+
+    function _handleLower(e: any, layerID: string) {
+        // Is loading
+        isOrderLoading.push(layerID);
+        _setIsOrderLoading([...isOrderLoading]);
+
+        // Go
+        lowerAsync(layerID).finally(() => {
+            _setIsOrderLoading(isOrderLoading.filter(function(val: string) { return val !== layerID }));
+        });
+    }
+
+    async function higherAsync(layerID: string) {
+        let lyr = await api.map(mapID).layer.getGeoviewLayerByIdAsync(layerID, true);
+        let zindex = lyr.gvLayers.getZIndex();
+        zindex++;
+        await setZIndexAsync(lyr, zindex);
+    }
+
+    async function lowerAsync(layerID: string) {
+        let lyr = await api.map(mapID).layer.getGeoviewLayerByIdAsync(layerID, true);
+        let zindex = lyr.gvLayers.getZIndex();
+        zindex--;
+        await setZIndexAsync(lyr, zindex);
+    }
+
+
+    /** ***************************************************************************************************************************
+     * Set the z-index of a layer and one can await until it's actually set and effective.
+     *
+     * @param {number} zindex The z-index to set.
+     */
+    async function setZIndexAsync(layer: any, zindex: number) {
+        if (layer.gvLayers) {
+            layer.gvLayers.setZIndex(zindex);
+            await utilities.whenThisThenAsync(() => {
+                return layer.gvLayers.state_.zIndex === zindex;
+            }, 10000);
+        }
     }
 
     function getContentMetadata(links: PyGeoAPICollectionsCollectionLinkResponsePayload[]): PyGeoAPICollectionsCollectionLinkResponsePayload | null {
@@ -452,7 +581,7 @@ const CZSPanel = (): JSX.Element => {
         return link;
     }
 
-    function onCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) : void {
+    async function onCollectionCheckedChangedAsync(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
         //console.log("collection checked changed", themeColl, value, checked, checkedColls);
         const the_key = list_key + "_" + themeColl.theme.id;
 
@@ -460,8 +589,117 @@ const CZSPanel = (): JSX.Element => {
         checkedCollections[the_key] = checkedColls;
         _setCheckedCollections(checkedCollections);
 
+        // Find the collection information for that collection id
+        let coll_info = findCollectionFromID(value);
+
+        // If not found
+        if (!coll_info) return;
+
+        let layerConfig = {
+            'geoviewLayerId': coll_info.id,
+            'geoviewLayerName': { 'en': coll_info.title, 'fr': coll_info.title },
+            'metadataAccessPath': { 'en': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.project + '_en', 'fr': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.project + '_fr' },
+            'geoviewLayerType': 'ogcWms',
+            'listOfLayerEntryConfig': [
+              {
+                'layerId': coll_info.short_name,
+                'layerName': { 'en': coll_info.title, 'fr': coll_info.title}
+              }
+            ]
+        };
+        let zIndex = 100;
+
+        if (list_key == "features") {
+            zIndex = 101;
+            layerConfig['geoviewLayerType'] = 'ogcWfs';
+            if (isDEBUG) {
+                layerConfig['metadataAccessPath'] = { 'en': 'https://ahocevar.com/geoserver/wfs', 'fr': 'https://ahocevar.com/geoserver/wfs' },
+                layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'states';
+                layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'states', 'fr': 'states'};
+            }
+        }
+
+        else if (isDEBUG && list_key == "coverages") {
+            layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/hydro_network_en', 'fr': 'https://maps.geogratis.gc.ca/wms/hydro_network_en' },
+            layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'hydro_network';
+            layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'hydro_network', 'fr': 'hydro_network'};
+            if (coll_info.id == "cdem_mpi__cdem") {
+                layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/railway_en', 'fr': 'https://maps.geogratis.gc.ca/wms/railway_fr' },
+                layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'railway';
+                layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'Railways', 'fr': 'Chemins de fer'};
+            }
+        }
+
+        // Show/Hide layer on map
+        console.log("Working on service/layer", layerConfig['metadataAccessPath']['en'], layerConfig['listOfLayerEntryConfig'][0]['layerId']);
+        console.log(layerConfig['metadataAccessPath']['en'] + "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetCapabilities&LAYERS=" + coll_info.short_name);
+        console.log(layerConfig);
+        console.log(JSON.stringify(layerConfig));
+        if (checked) {
+            // Add the layer
+            api.map(mapID).layer.addGeoviewLayer(layerConfig);
+
+            // Get the layer as soon as it's in the api
+            let lyr = await api.map(mapID).layer.getGeoviewLayerByIdAsync(coll_info.id, false);
+
+            // Set the visible extent for the layer
+            adjustExtentOnLayerID(lyr, geometry);
+
+            // Get the layer as soon as it's in the api AND loaded on the map
+            lyr = await api.map(mapID).layer.getGeoviewLayerByIdAsync(coll_info.id, true);
+
+            // Now we can adjust its z-index
+            lyr.gvLayers.setZIndex(zIndex);
+
+            // All good
+            viewedLayers[coll_info.id] = layerConfig;
+        }
+
+        else if (viewedLayers[coll_info.id]) {
+            api.map(mapID).layer.removeGeoviewLayer(viewedLayers[coll_info.id]);
+            delete viewedLayers[coll_info.id];
+        }
+        _setViewedLayers(viewedLayers);
+
+        // NOTES
+        // https://qgis-stage.services.geo.ca/dev/nrcan/major_projects_inventory_en?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=-2340914.25,-700216.125,3444951,1858118.5&CRS=EPSG:3978&WIDTH=596&HEIGHT=264&LAYERS=major_projects_inventory_point&STYLES=&FORMAT=image/png&DPI=96&MAP_RESOLUTION=96&FORMAT_OPTIONS=dpi:96&TRANSPARENT=TRUE
+        // https://qgis-stage.services.geo.ca/dev/nrcan/cdem_en?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&BBOX=-2340914.25,-700216.125,3444951,1858118.5&CRS=EPSG:3978&WIDTH=596&HEIGHT=264&LAYERS=cdem&STYLES=&FORMAT=image/png&DPI=96&MAP_RESOLUTION=96&FORMAT_OPTIONS=dpi:96&TRANSPARENT=TRUE
+
+        // let layerConfig2 = {
+        //     'geoviewLayerId': 'wmsLYR1-Root',
+        //     'geoviewLayerName': { 'en': 'Weather Group', 'fr': 'Weather Group' },
+        //     'metadataAccessPath': { 'en': 'https://geo.weather.gc.ca/geomet', 'fr': 'https://geo.weather.gc.ca/geomet' },
+        //     'geoviewLayerType': 'ogcWms',
+        //     'listOfLayerEntryConfig': [
+        //       {
+        //         'entryType': 'group',
+        //         'layerId': 'wmsLYR1-Group',
+        //         'layerName': { 'en': 'Group', 'fr': 'Group' },
+        //         'listOfLayerEntryConfig': [
+        //           {
+        //             'layerId': 'CURRENT_CONDITIONS',
+        //             'source': {
+        //               'featureInfo': {
+        //                 'queryable': true,
+        //                 'nameField': { 'en': 'plain_text', 'fr': 'plain_texte' },
+        //                 'fieldTypes': 'string',
+        //                 'outfields': { 'en': 'plain_text', 'fr': 'plain_texte' },
+        //                 'aliasFields':  { 'en': 'Forcast', 'fr': 'Prévision' }
+        //               }
+        //             }
+        //           },
+        //           {
+        //             'layerId': 'CGSL.ETA_ICEC',
+        //             'layerName': { 'en': 'Ice Cover', 'fr': 'Ice Cover' }
+        //           }
+        //         ]
+        //       }
+        //     ]
+        // }
+
+
         // If any are checked
-        _setDisplayButtonState({active: checkDisplayButtonActive()});
+        //_setDisplayButtonState({active: checkDisplayButtonActive()});
         _setExtractButtonState({active: checkExtractButtonActive()});
     }
 
@@ -473,20 +711,15 @@ const CZSPanel = (): JSX.Element => {
         return !!(getCheckedCollections().length) && email.length;
     }
 
-    function onShowPreview(): void {
-        // Query the collections individually to show them on the map
-        callDisplayFeatures();
-    }
-
     function onEmailChange(e: any): void {
         const txtEmail: typeof TextField = document.getElementById('czs_email');
         _setEmail(txtEmail?.value)
         _setExtractButtonState({active: checkExtractButtonActive()});
     }
 
-    function onExtractFeatures(): void {
+    async function onExtractFeatures() {
         // Extract the collections as a zip
-        callExtractFeatures(email);
+        await callExtractFeaturesAsync(email);
     }
 
 
@@ -498,15 +731,32 @@ const CZSPanel = (): JSX.Element => {
         console.log("hover off", feature);
     }
 
+    function _handleError(err: any) {
+        console.log("ERROR", err);
+        utilities.showError(mapID, err);
+    }
+
+    function toggleDebug() {
+        _setIsDEBUG(!isDEBUG);
+    }
+
     // Return coordinates
     return (
         <div>
-            <Button
+            <div>
+                <Button
+                    type="text"
+                    onClick={ onStartDrawingAsync }
+                    size="small"
+                    // disabled={ clearButtonState.active }
+                >{ t('czs.draw') }</Button>
+                <Button
                 type="text"
-                onClick={ onClearDrawing }
+                onClick={ onClearDrawingAsync }
                 size="small"
                 disabled={ !clearButtonState.active }
-            >{ t('czs.clear') }</Button>
+                >{ t('czs.clear') }</Button>
+            </div>
             <div className='loading-spinner-container'>
                 <CircularProgress
                     isLoaded={!isLoading}
@@ -531,12 +781,6 @@ const CZSPanel = (): JSX.Element => {
                     ]}
                 ></Accordion>
             </div>
-            <Button
-                type="text"
-                onClick={ onShowPreview }
-                size="small"
-                disabled={ !displayButtonState.active }
-            >{ t('czs.show_preview') }</Button>
 
             <TextField id="czs_email" type="email" placeholder={ t('czs.enter_email') } style={ { marginTop: 30, width: '100%' } } onChange={ onEmailChange } value={ email }></TextField>
 
@@ -556,6 +800,13 @@ const CZSPanel = (): JSX.Element => {
                     }
                 ]}
             ></Accordion>
+
+            <Button
+                type="text"
+                onClick={toggleDebug}
+                className={ isDEBUG ? "is-debug" : ""}
+                size="x-small"
+            >DEBUG</Button>
 
             <div className='loading-spinner-container'>
                 <CircularProgress

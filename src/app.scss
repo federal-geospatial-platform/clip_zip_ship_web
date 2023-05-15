@@ -45,11 +45,22 @@ h1 {
 
 .help-text {
   font-size: smaller;
+  padding: 0px 10px;
 }
 
-.loading-spinner {
-  position: relative !important;
-  margin: 50px 0px 70px 0px;
+.loading-spinner-container {
+  position: absolute;
+  top: 40px;
+  right: 40px;
+}
+
+.loading-spinner-container .loading-spinner .MuiCircularProgress-root {
+  width: 60px !important;
+  height: 60px !important;
+}
+
+.loading-collections .MuiCircularProgress-root {
+  color: rgba(0, 95, 203, 0.666);
 }
 
 .SnackbarItem-contentRoot:not(.SnackbarItem-variantError):not(.SnackbarItem-variantWarning):not(.SnackbarItem-variantInfo):not(.SnackbarItem-variantSuccess) {

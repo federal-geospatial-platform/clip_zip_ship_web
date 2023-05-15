@@ -11,9 +11,11 @@ export type PyGeoAPICollectionsCollectionResponsePayload = {
     theme: string;
     description: string;
     links: PyGeoAPICollectionsCollectionLinkResponsePayload[];
-    project: string;
+    parent: string;
     short_name: string;
     org_schema: string;
+    crs: string[];
+    wkt: string;
 };
 
 export type PyGeoAPICollectionsCollectionLinkResponsePayload = {
@@ -36,15 +38,11 @@ export type PyGeoAPIRecordsDataResponsePayload = {
     type: string;
 };
 
-export type PyGeoAPIExtractResponsePayload = {
-
-};
-
-export default class CZSAPI {
+export default class CZSServices {
 
     static getCollectionsPOSTAsync = async (lang: string, geom_wkt: string, crs: number) => {
         let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload[]>((resolve, reject) => {
-            fetch(URL_PYGEOAPI_ENDPOINT + "&lang=" + lang, {
+            fetch(PYGEOAPI_URL_ENDPOINT + "&lang=" + lang, {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
@@ -82,7 +80,7 @@ export default class CZSAPI {
 
     static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number) => {
         let promise = new Promise((resolve, reject) => {
-            fetch(URL_EXTRACT_PROCESS, {
+            fetch(PYGEOAPI_URL_EXTRACT_PROCESS, {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
@@ -133,44 +131,56 @@ export default class CZSAPI {
         return promise;
     };
 
-    // static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number) => {
-    //     let url = URL_FEATURES_EXTRACT.replace("{collectionId}", collection.id);
-    //     if (geom_wkt)
-    //         url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=true";
-    //     let promise = new Promise<PyGeoAPIRecordsResponsePayload>((resolve, reject) => {
-    //         fetch(url, {
-    //             headers: {
-    //                 'Accept': 'application/json',
-    //                 'Content-Type': 'application/json'
-    //             },
-    //             method: "GET"
-    //         }).then((response) => {
-    //             // Only process valid response
-    //             if (response.status === 200) {
-    //                 response.json().then((data: PyGeoAPIRecordsDataResponsePayload) => {
-    //                     // Resolve
-    //                     resolve({
-    //                         collection: collection,
-    //                         data: data
-    //                     });
-    //                 });
-    //             }
+    static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number) => {
+        let url = PYGEOAPI_URL_FEATURES_EXTRACT.replace("{collectionId}", collection.id);
+        if (geom_wkt)
+            url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=true";
+        let promise = new Promise<PyGeoAPIRecordsResponsePayload>((resolve, reject) => {
+            fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "GET"
+            }).then((response) => {
+                // Only process valid response
+                if (response.status === 200) {
+                    response.json().then((data: PyGeoAPIRecordsDataResponsePayload) => {
+                        // Resolve
+                        resolve({
+                            collection: collection,
+                            data: data
+                        });
+                    }).catch((err) => {
+                        console.log(err);
+                        reject("Invalid response returned by the server.");
+                    });
+                }
 
-    //             else {
-    //                 alert("failed getFeatures");
-    //                 console.log(response);
-    //                 reject("failed");
-    //             }
-    //         }).catch((error) => {
-    //             alert("failed getFeatures");
-    //             console.log(error);
-    //             reject(error);
-    //         });
-    //     });
+                else {
+                    // If too large (413)
+                    if (response.status == 412) {
+                        reject("Please draw an extraction area.");
+                    }
 
-    //     // Return the promise
-    //     return promise;
-    // };
+                    else if (response.status == 413) {
+                        reject("Your extraction area is too big. Please use an extraction area less than 1,000 square kilometers.");
+                    }
+
+                    else {
+                        console.log("Invalid status: " + response.status);
+                        reject("The server couldn't extract the data.");
+                    }
+                }
+            }).catch((error) => {
+                console.log(error);
+                reject("Failed to communicate with the server to fetch features.");
+            });
+        });
+
+        // Return the promise
+        return promise;
+    };
 
     // static getCoverageAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number) => {
     //     let url = URL_COVERAGE_EXTRACT.replace("{collectionId}", collection.id);

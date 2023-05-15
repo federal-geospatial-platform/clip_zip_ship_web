@@ -25,11 +25,11 @@ const map_config = {
 			'shaded': true,
 			'labeled': false
 		},
-		'listOfGeoviewLayerConfig': [{"geoviewLayerId":"cdem_alex__cdem","geoviewLayerName":{"en":"Canadian Digital Elevation Model, 1945-2011 - alex","fr":"Canadian Digital Elevation Model, 1945-2011 - alex"},"metadataAccessPath":{"en":"https://maps.geogratis.gc.ca/wms/hydro_network_en","fr":"https://maps.geogratis.gc.ca/wms/hydro_network_en"},"geoviewLayerType":"ogcWms","listOfLayerEntryConfig":[{"layerId":"hydro_network","layerName":{"en":"hydro_network","fr":"hydro_network"}}]}]
+		'listOfGeoviewLayerConfig': []
 	},
 	'theme': 'dark',
-	'components': ['app-bar', 'nav-bar', 'north-arrow', 'overview-map', 'footer-bar'],
-	'corePackages': ['layers-panel'],
+	'components': ['app-bar', 'nav-bar', 'north-arrow', 'footer-bar'],
+	'corePackages': [], // 'layers-panel'
 	'suportedLanguages': ['en', 'fr']
 };
 

@@ -1,5 +1,6 @@
 // Import CZS Panel
 import CZSPanel from './czs_panel';
+import CZSEngine from './czs_engine';
 
 /**
  * Create the application module for Clip Zip Ship. With GeoView, most is delegated to it.
@@ -8,18 +9,20 @@ import CZSPanel from './czs_panel';
  */
 const App = (): JSX.Element => {
 
-    // The Map ID
-    const mapID = 'mapCZS';
-
     // Fetch the cgpv module
 	const w = window as any;
     const cgpv = w['cgpv'];
-	const { useEffect } = cgpv.react;
+    const { react } = cgpv;
+    const { useEffect } = react;
+    const MAP_ID = "mapCZS";
+    let czs_engine: CZSEngine;
 
     useEffect(() => {
         // Initialize the map
         cgpv.init(function () {
-            //console.log("api is ready");
+            // Now that the API is initialized;
+            // Initialize the CZS Engine
+            czs_engine = new CZSEngine(cgpv, MAP_ID, document.documentElement.lang);
 
             // Button
             const button = {
@@ -37,8 +40,8 @@ const App = (): JSX.Element => {
                 width: 450,
             };
 
-            // call an api function to add a panel with a button in the default group
-            cgpv.api.map(mapID).appBarButtons.createAppbarPanel(button, panel, null);
+            // Call an api function to add a panel with a button in the default group
+            cgpv.api.map(MAP_ID).appBarButtons.createAppbarPanel(button, panel, null);
         });
 
     }, []);

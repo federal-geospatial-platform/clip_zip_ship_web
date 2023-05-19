@@ -1,42 +1,9 @@
-
-
-export type PyGeoAPICollectionsResponsePayload = {
-    collections: PyGeoAPICollectionsCollectionResponsePayload[]
-};
-
-export type PyGeoAPICollectionsCollectionResponsePayload = {
-    id: string;
-    itemType: string;
-    title: string;
-    theme: string;
-    description: string;
-    links: PyGeoAPICollectionsCollectionLinkResponsePayload[];
-    parent: string;
-    short_name: string;
-    org_schema: string;
-    crs: string[];
-    wkt: string;
-};
-
-export type PyGeoAPICollectionsCollectionLinkResponsePayload = {
-    type: string;
-    rel: string;
-    title: string;
-    href: string;
-};
-
-export type PyGeoAPIRecordsResponsePayload = {
-    collection: PyGeoAPICollectionsCollectionResponsePayload;
-    data: PyGeoAPIRecordsDataResponsePayload;
-};
-
-export type PyGeoAPIRecordsDataResponsePayload = {
-    features: object[];
-    links: object[];
-    numberMatched: number;
-    numberReturned: number;
-    type: string;
-};
+import {
+    PyGeoAPICollectionsResponsePayload,
+    PyGeoAPICollectionsCollectionResponsePayload,
+    PyGeoAPIRecordsResponsePayload,
+    PyGeoAPIRecordsDataResponsePayload
+} from './czs_types';
 
 export default class CZSServices {
 

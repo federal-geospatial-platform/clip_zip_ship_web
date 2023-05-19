@@ -141,7 +141,7 @@ export default class CZSServices {
                 }
             }).catch((error) => {
                 console.log(error);
-                reject("Failed to communicate with the server to fetch features.");
+                reject("Failed to communicate with the server to fetch features for collection: " + collection.title);
             });
         });
 

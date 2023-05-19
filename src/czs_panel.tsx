@@ -1,5 +1,5 @@
 import {
-    CZS_EVENT_NAMES, CZS_EVENT_NAMES_UI,
+    CZS_EVENT_NAMES,
     ThemeCollections,
     PyGeoAPICollectionsCollectionResponsePayload,
     PyGeoAPICollectionsCollectionLinkResponsePayload
@@ -12,7 +12,7 @@ import T_FR from '../locales/fr/translation.json';
  *
  * @returns {JSX.Elemet} the element that creates the container and the map
  */
-const CZSPanel = (): JSX.Element => {
+const CZSPanel = (props: any): JSX.Element => {
 
     // Fetch the cgpv module
     const w = window as any;
@@ -230,32 +230,32 @@ const CZSPanel = (): JSX.Element => {
     }, []);
 
     function handleStartDrawing() {
-        api.event.emit({ event: CZS_EVENT_NAMES_UI.UI_START_DRAWING, handlerName: MAP_ID });
+        props.handleStartDrawing?.();
     }
 
     function handleClearDrawing() {
-        api.event.emit({ event: CZS_EVENT_NAMES_UI.UI_CLEAR_DRAWING, handlerName: MAP_ID });
+        props.handleClearDrawing?.();
+    }
+
+    function handleExtractFeatures() {
+        props.handleExtractFeatures?.({ email: email });
+    }
+
+    function handleHigher(e: any, coll_type: string, coll_id: string) {
+        props.handleHigher?.({ coll_type, coll_id });
+    }
+
+    function handleLower(e: any, coll_type: string, coll_id: string) {
+        props.handleLower?.({ coll_type, coll_id });
+    }
+
+    function handleCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
+        props.handleCollectionCheckedChanged?.({ list_key, themeColl, value, checked, checkedColls });
     }
 
     function handleEmailChange(e: any): void {
         const txtEmail: typeof TextField = document.getElementById('czs_email');
         _setEmail(txtEmail?.value);
-    }
-
-    function handleExtractFeatures() {
-        api.event.emit({ event: CZS_EVENT_NAMES_UI.UI_START_EXTRACTION, handlerName: MAP_ID, email: email });
-    }
-
-    function handleHigher(e: any, coll_type: string, collection_id: string) {
-        api.event.emit({ event: CZS_EVENT_NAMES_UI.UI_ORDER_HIGHER_STARTED, handlerName: MAP_ID, coll_type: coll_type, coll_id: collection_id });
-    }
-
-    function handleLower(e: any, coll_type: string, collection_id: string) {
-        api.event.emit({ event: CZS_EVENT_NAMES_UI.UI_ORDER_LOWER_STARTED, handlerName: MAP_ID, coll_type: coll_type, coll_id: collection_id });
-    }
-
-    function handleCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
-        api.event.emit({ event: CZS_EVENT_NAMES_UI.UI_COLLECTION_CHECKED, handlerName: MAP_ID, list_key: list_key, themeColl: themeColl, value: value, checked: checked, checkedColls: checkedColls });
     }
 
     function getContentThemes(list_key: string, thmColls: ThemeCollections[]) {

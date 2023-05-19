@@ -17,6 +17,32 @@ const App = (): JSX.Element => {
     const MAP_ID = "mapCZS";
     let czs_engine: CZSEngine;
 
+    function handleStartDrawing(e: any) {
+        // Start the Engine drawing
+        czs_engine.startDrawing();
+    }
+
+    async function handleClearDrawing(e: any) {
+        // Clear the Engine drawing
+        await czs_engine.clearDrawingAsync();
+    }
+
+    async function handleExtractFeatures(e: any) {
+        await czs_engine.extractFeaturesAsync(e.email);
+    }
+
+    async function handleHigher(e: any) {
+        await czs_engine.layerOrderHigherAsync(e.coll_type, e.coll_id);
+    }
+
+    async function handleLower(e: any) {
+        await czs_engine.layerOrderLowerAsync(e.coll_type, e.coll_id);
+    }
+
+    async function handleCollectionCheckedChanged(e: any) {
+        await czs_engine.updateCollectionCheckedAsync(e.list_key, e.themeColl, e.value, e.checked, e.checkedColls);
+    }
+
     useEffect(() => {
         // Initialize the map
         cgpv.init(function () {
@@ -36,7 +62,14 @@ const App = (): JSX.Element => {
             const panel = {
                 panelId: 'CZSPanelID',
                 title: 'Clip Zip Ship (PRE-ALPHA BUILD)',
-                content: cgpv.react.createElement(CZSPanel),
+                content: cgpv.react.createElement(CZSPanel, {
+                    handleStartDrawing,
+                    handleClearDrawing,
+                    handleExtractFeatures,
+                    handleHigher,
+                    handleLower,
+                    handleCollectionCheckedChanged
+                }),
                 width: 450,
             };
 

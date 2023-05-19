@@ -1,6 +1,6 @@
 import CZSServices from './czs_services';
 import {
-    CZS_EVENT_NAMES, CZS_EVENT_NAMES_UI,
+    CZS_EVENT_NAMES,
     ThemeCollections,
     PyGeoAPICollectionsCollectionResponsePayload,
     PyGeoAPIRecordsResponsePayload
@@ -95,68 +95,9 @@ export default class CZSEngine {
             },
             this._mapID
         ); // End "on" handler
-
-        // Listen to the CZS start drawing event
-        this._cgpvapi.event.on(
-            CZS_EVENT_NAMES_UI.UI_START_DRAWING,
-            (payload: any) => {
-                // Redirect
-                this.handleStartDrawing();
-            },
-            this._mapID
-        ); // End "on" handler
-
-        // Listen to the CZS clear drawing event
-        this._cgpvapi.event.on(
-            CZS_EVENT_NAMES_UI.UI_CLEAR_DRAWING,
-            async (payload: any) => {
-                // Redirect
-                let loaded: boolean = await this.handleClearDrawingAsync();
-            },
-            this._mapID
-        ); // End "on" handler
-
-        // Listen to the CZS start extraction event
-        this._cgpvapi.event.on(
-            CZS_EVENT_NAMES_UI.UI_START_EXTRACTION,
-            async (payload: any) => {
-                // Redirect
-                let result: any = await this.handleExtractFeaturesAsync(payload.email);
-            },
-            this._mapID
-        ); // End "on" handler
-
-        // Listen to the CZS layer order higher event
-        this._cgpvapi.event.on(
-            CZS_EVENT_NAMES_UI.UI_ORDER_HIGHER_STARTED,
-            async (payload: any) => {
-                // Redirect
-                await this.handleLayerOrderHigherAsync(payload.coll_type, payload.coll_id);
-            },
-            this._mapID
-        ); // End "on" handler
-
-        // Listen to the CZS layer order lower event
-        this._cgpvapi.event.on(
-            CZS_EVENT_NAMES_UI.UI_ORDER_LOWER_STARTED,
-            async (payload: any) => {
-                // Redirect
-                await this.handleLayerOrderLowerAsync(payload.coll_type, payload.coll_id);
-            },
-            this._mapID
-        ); // End "on" handler
-
-        // Listen to the CZS layer order lower event
-        this._cgpvapi.event.on(
-            CZS_EVENT_NAMES_UI.UI_COLLECTION_CHECKED,
-            async (payload: any) => {
-                await this.handleCollectionCheckedAsync(payload.list_key, payload.themeColl, payload.value, payload.checked, payload.checkedColls);
-            },
-            this._mapID
-        ); // End "on" handler
     }
 
-    handleStartDrawing = (): void => {
+    startDrawing = (): void => {
         // Clear current drawing
         this._map.layer.vector.deleteGeometriesFromGroup(CZSEngine.GEOM_GRP_DRAW_ID);
 
@@ -164,7 +105,7 @@ export default class CZSEngine {
         this._drawInter = this._map.initDrawInteractions(CZSEngine.GEOM_GRP_DRAW_ID, "Polygon");
     }
 
-    handleClearDrawingAsync = async (): Promise<boolean> => {
+    clearDrawingAsync = async (): Promise<boolean> => {
         // Clear current drawing
         this._map.layer.vector.deleteGeometriesFromGroup(CZSEngine.GEOM_GRP_DRAW_ID);
         // Stop drawing if currently drawing
@@ -203,7 +144,7 @@ export default class CZSEngine {
         return await this.loadCollectionsAsync(geom);
     }
 
-    handleCollectionCheckedAsync = async (list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>): Promise<boolean> => {
+    updateCollectionCheckedAsync = async (list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>): Promise<boolean> => {
         try {
             // Find the collection information for that collection id
             let coll_info = this.findCollectionFromID(value);
@@ -246,7 +187,7 @@ export default class CZSEngine {
         }
     }
 
-    handleLayerOrderHigherAsync = async (coll_type: string, coll_id: string): Promise<boolean> => {
+    layerOrderHigherAsync = async (coll_type: string, coll_id: string): Promise<boolean> => {
         this._orderingCollections.push(coll_id);
         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED, handlerName: this._mapID, collections: this._orderingCollections });
         return await this.higherAsync(coll_type, coll_id).finally(() => {
@@ -256,7 +197,7 @@ export default class CZSEngine {
         });
     }
 
-    handleLayerOrderLowerAsync = async (coll_type: string, coll_id: string): Promise<boolean> => {
+    layerOrderLowerAsync = async (coll_type: string, coll_id: string): Promise<boolean> => {
         this._orderingCollections.push(coll_id);
         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED, handlerName: this._mapID, collections: this._orderingCollections });
         return await this.lowerAsync(coll_type, coll_id).finally(() => {
@@ -266,7 +207,7 @@ export default class CZSEngine {
         });
     }
 
-    handleExtractFeaturesAsync = async (email: string): Promise<any> => {
+    extractFeaturesAsync = async (email: string): Promise<any> => {
         try {
             // Start
             this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_STARTED, handlerName: this._mapID });

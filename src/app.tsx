@@ -28,18 +28,22 @@ const App = (): JSX.Element => {
     }
 
     async function handleExtractFeatures(e: any) {
+        // Extract features
         await czs_engine.extractFeaturesAsync(e.email);
     }
 
     async function handleHigher(e: any) {
+        // Order the layer higher in z index
         await czs_engine.layerOrderHigherAsync(e.coll_type, e.coll_id);
     }
 
     async function handleLower(e: any) {
+        // Order the layer lower in z index
         await czs_engine.layerOrderLowerAsync(e.coll_type, e.coll_id);
     }
 
     async function handleCollectionCheckedChanged(e: any) {
+        // Update the checked list of collections
         await czs_engine.updateCollectionCheckedAsync(e.list_key, e.themeColl, e.value, e.checked, e.checkedColls);
     }
 

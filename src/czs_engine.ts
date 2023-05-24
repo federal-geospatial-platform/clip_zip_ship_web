@@ -255,7 +255,7 @@ export default class CZSEngine {
     }
 
     onUpdateLayersEnded = (collections: any) => {
-        console.log("Updated collections", collections);
+        //console.log("Updated collections", collections);
         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED, handlerName: this._mapID, collections: collections });
     }
 
@@ -567,7 +567,7 @@ export default class CZSEngine {
             'metadataAccessPath': { 'en': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent, 'fr': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent },
             'listOfLayerEntryConfig': [
                 {
-                    'layerId': coll_info.id,
+                    'layerId': coll_info.short_name,
                     'layerName': { 'en': coll_info.title, 'fr': coll_info.title },
                     'source': {
                         'dataProjection': "EPSG:4326" // Default..

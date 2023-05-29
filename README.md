@@ -4,7 +4,7 @@ This is the main code for the Clip Zip Ship plugin for GeoView
 ### First clone this repo
 
 ```
-$ git clone https://github.com/ederal-geospatial-platform/clip_zip_ship_web.git
+$ git clone https://github.com/federal-geospatial-platform/clip_zip_ship_web.git
 ```
 
 ### Go to the directory of the cloned repo

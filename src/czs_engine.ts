@@ -1,11 +1,13 @@
-import CZSServices from './czs_services';
+import { Mutex } from 'async-mutex';
 import {
     CZS_EVENT_NAMES,
     ThemeCollections,
     PyGeoAPICollectionsCollectionResponsePayload,
     PyGeoAPIRecordsResponsePayload
 } from './czs_types';
-import { Mutex } from 'async-mutex';
+import CZSUtils from './czs_utils';
+import CZSServices from './czs_services';
+
 
 /**
  * Class used to handle CZS core logic
@@ -40,7 +42,7 @@ export default class CZSEngine {
     _checkedCollections: any = {};
     _viewedCollections: any = {};
     _orderingCollections: any = [];
-    _isDebug: boolean = false;
+    _isDebug: boolean = window.location.hostname === "localhost";
 
     // Tasks watches
     __watcherLoadCollectionsCounter: number = 0;
@@ -331,10 +333,13 @@ export default class CZSEngine {
 
         else {
             // Raster type, those are added like a regular layer
+            //console.log("higherAsync 1");
             const lyr = await this._map.layer.getGeoviewLayerByIdAsync(collection_id, true);
             let zindex = lyr.gvLayers.getZIndex();
             zindex++;
+            //console.log("higherAsync 1.3")
             await this.setZIndexAsync(lyr, zindex);
+            //console.log("higherAsync 1.5")
             return true;
         }
     }
@@ -436,6 +441,30 @@ export default class CZSEngine {
                             thmColl.collections.push(collection);
                             this._collections.push(collection);
                         }
+                    });
+
+                    // Reorder the themes by alphabetical order
+                    collectionFeatures.sort((t1: ThemeCollections, t2: ThemeCollections): number => {
+                        return CZSUtils.sortAlphabetically(t1.theme.name, t2.theme.name);
+                    });
+
+                    // Reorder the themes by alphabetical order
+                    collectionCoverages.sort((t1: ThemeCollections, t2: ThemeCollections): number => {
+                        return CZSUtils.sortAlphabetically(t1.theme.name, t2.theme.name);
+                    });
+
+                    // Reorder each collection within each theme
+                    collectionFeatures.forEach((t: ThemeCollections) => {
+                        t.collections.sort((c1: PyGeoAPICollectionsCollectionResponsePayload, c2: PyGeoAPICollectionsCollectionResponsePayload): number => {
+                            return CZSUtils.sortAlphabetically(c1.title, c2.title);
+                        });
+                    });
+
+                    // Reorder each collection within each theme
+                    collectionCoverages.forEach((t: ThemeCollections) => {
+                        t.collections.sort((c1: PyGeoAPICollectionsCollectionResponsePayload, c2: PyGeoAPICollectionsCollectionResponsePayload): number => {
+                            return CZSUtils.sortAlphabetically(c1.title, c2.title);
+                        });
                     });
 
                     // On loaded features

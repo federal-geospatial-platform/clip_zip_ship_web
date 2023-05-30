@@ -3,24 +3,36 @@ import {
     ThemeCollections,
     PyGeoAPICollectionsCollectionResponsePayload
 } from './czs_types';
+import CZSUtils from './czs_utils';
 import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
-import CZSUtils from './czs_utils';
-import { renderToStaticMarkup } from "react-dom/server"
+
+
+interface CZSPanelProps {
+    handleStartDrawing: () => void;
+    handleClearDrawing: () => void;
+    handleExtractFeatures: (email: string) => void;
+    handleZoomToCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
+    handleViewMetadataCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
+    handleViewCapabilitiesCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
+    handleHigher: (coll_type: string, coll_id: string) => void;
+    handleLower: (coll_type: string, coll_id: string) => void;
+    handleCollectionCheckedChanged: (list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) => void;
+}
 
 /**
  * Create a container containing a leaflet map using the GeoView viewer
  *
  * @returns {JSX.Elemet} the element that creates the container and the map
  */
-const CZSPanel = (props: any): JSX.Element => {
+const CZSPanel = (props: CZSPanelProps): JSX.Element => {
 
     // Fetch the cgpv module
     const w = window as any;
     const cgpv = w['cgpv'];
     const { api, react, ui, useTranslation } = cgpv;
     const { createElement: h, useState, useEffect } = react;
-    const { makeStyles, useTheme } = ui;
+    //const { makeStyles, useTheme } = ui;
     const { Button, CircularProgress, Accordion, CheckboxListAlex, TextField, Menu, MenuItem, ListItem, ListItemText, ListItemIcon } = ui.elements;
     const MAP_ID = "mapCZS";
 
@@ -82,15 +94,7 @@ const CZSPanel = (props: any): JSX.Element => {
             MAP_ID
         );
 
-        // Listen to the engine load collections ended event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_ENDED,
-            (payload: any) => {
-                _setIsLoading(false);
-            },
-            MAP_ID
-        );
-
+        // Listen to the engine event completed for loading the collections of type features
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_FEATURES,
             (payload: any) => {
@@ -99,10 +103,85 @@ const CZSPanel = (props: any): JSX.Element => {
             MAP_ID
         );
 
+        // Listen to the engine event completed for loading the collections of type coverages
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_COVERAGES,
             (payload: any) => {
                 _setCollectionsCoverages(payload.collections);
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine event completed for loading collection of any type
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_ENDED,
+            (payload: any) => {
+                _setIsLoading(false);
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine event when a new collection has been checked/unchecked and process has started
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_STARTED,
+            (payload: any) => {
+                // Is loading
+                _setIsLoadingFeatures(true);
+                _setCheckedCollections({ ...payload.checkedCollections });
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine event when a new collection has been checked/unchecked and process has completed
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_ENDED,
+            (payload: any) => {
+                // Is loading
+                _setIsLoadingFeatures(false);
+                // If extraction is possible
+                _setHasViewedCollections(!!Object.keys(payload.viewedCollections).length)
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine is changing the z-index visibility order of some collections
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED,
+            (payload: any) => {
+                // Is layer ordering
+                _setIsOrderLoading([...payload.collections]);
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine event when started updating the collections list and their map visibility
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_STARTED,
+            (payload: any) => {
+                // Is loading
+                _setIsLoadingFeatures(true);
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine event when some collections couldn't be shown on map, only their footprints
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT,
+            (payload: any) => {
+                // Show error
+                api.utilities.showWarning(MAP_ID, "Extraction area too big for collection: " + payload.collection.title);
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine event when finished updating the collections list and their map visibility
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED,
+            (payload: any) => {
+                // Is loading
+                _setIsLoadingFeatures(false);
+                // If extraction is possible
+                _setHasViewedCollections(!!Object.keys(payload.collections).length);
             },
             MAP_ID
         );
@@ -139,101 +218,41 @@ const CZSPanel = (props: any): JSX.Element => {
             MAP_ID
         );
 
-        // Listen to the engine extraction started event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_STARTED,
-            (payload: any) => {
-                // Is loading
-                _setIsLoadingFeatures(true);
-                _setCheckedCollections({ ...payload.checkedCollections });
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine extraction ended event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_ENDED,
-            (payload: any) => {
-                // Is loading
-                _setIsLoadingFeatures(false);
-                // If extraction is possible
-                _setHasViewedCollections(!!Object.keys(payload.viewedCollections).length)
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine layer ordered event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED,
-            (payload: any) => {
-                _setIsOrderLoading([...payload.collections]);
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine layer ordered event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_STARTED,
-            (payload: any) => {
-                // Is loading
-                _setIsLoadingFeatures(true);
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine layer ordered event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT,
-            (payload: any) => {
-                // Show error
-                api.utilities.showWarning(MAP_ID, "Extraction area too big for collection: " + payload.collection.title);
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine layer ordered event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED,
-            (payload: any) => {
-                // Is loading
-                _setIsLoadingFeatures(false);
-                // If extraction is possible
-                _setHasViewedCollections(!!Object.keys(payload.collections).length);
-            },
-            MAP_ID
-        );
-
         // Listen to the engine error event
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_ERROR,
             (payload: any) => {
+                // Show error
                 api.utilities.showError(MAP_ID, payload.error);
             },
             MAP_ID
         );
 
-        // Listen to the engine error event
+        // Listen to the engine warning when trying to zoom outside of map extent limits
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_ERROR_ZOOMING_OUTSIDE,
             (payload: any) => {
+                // Show warning
                 api.utilities.showWarning(MAP_ID, "Some elements were outside of the map extent limits.");
             },
             MAP_ID
         );
 
-        // Listen to the engine error event
+        // Listen to the engine error when trying to show a collection
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_ERROR_SHOWING_COLLECTION,
             (payload: any) => {
+                // Show error
                 api.utilities.showError(MAP_ID, payload.error);
             },
             MAP_ID
         );
 
-        // Listen to the engine error event
+        // Listen to the engine error when extracting records
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_ERROR_EXTRACTING,
             (payload: any) => {
+                // Show error
                 api.utilities.showError(MAP_ID, payload.error);
             },
             MAP_ID
@@ -250,7 +269,7 @@ const CZSPanel = (props: any): JSX.Element => {
     }
 
     function handleExtractFeatures() {
-        props.handleExtractFeatures?.({ email: email });
+        props.handleExtractFeatures?.(email);
     }
 
     function handleMenuMore(e: any, coll: PyGeoAPICollectionsCollectionResponsePayload) {
@@ -276,19 +295,19 @@ const CZSPanel = (props: any): JSX.Element => {
         setAnchorEl(null);
     }
 
-    function handleHigher(e: any, coll_type: string, coll_id: string) {
-        props.handleHigher?.({ coll_type, coll_id });
+    function handleHigher(coll_type: string, coll_id: string) {
+        props.handleHigher?.(coll_type, coll_id);
     }
 
-    function handleLower(e: any, coll_type: string, coll_id: string) {
-        props.handleLower?.({ coll_type, coll_id });
+    function handleLower(coll_type: string, coll_id: string) {
+        props.handleLower?.(coll_type, coll_id);
     }
 
     function handleCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
-        props.handleCollectionCheckedChanged?.({ list_key, themeColl, value, checked, checkedColls });
+        props.handleCollectionCheckedChanged?.(list_key, themeColl, value, checked, checkedColls);
     }
 
-    function handleEmailChange(e: any): void {
+    function handleEmailChange(): void {
         const txtEmail: typeof TextField = document.getElementById('czs_email');
         _setEmail(txtEmail?.value);
     }
@@ -300,6 +319,7 @@ const CZSPanel = (props: any): JSX.Element => {
 
     function renderContentThemes(list_key: string, thmColls: ThemeCollections[]) {
         // For each theme
+        //console.log("renderContentThemes");
         return <Accordion
             className="accordion-theme"
             items={Object.values(thmColls).map((thmColl: ThemeCollections) => (
@@ -347,10 +367,10 @@ const CZSPanel = (props: any): JSX.Element => {
         let orders: JSX.Element = <span></span>;
         if (checkedCollections[key] && checkedCollections[key].includes(coll.id)) {
             orders = <div className={`layer-order-layers layer-option ${isOrderLoading.includes(coll.id) ? "loading" : ""}`}>
-                        <div onClick={ (e) => { handleHigher(e, coll.itemType, coll.id); } } title="Bring to front">
+                        <div onClick={ (e) => { handleHigher(coll.itemType, coll.id); } } title="Bring to front">
                             <img src='./img/arrow_up.png'></img>
                         </div>
-                        <div onClick={ (e) => { handleLower(e, coll.itemType, coll.id); } } title="Send to back">
+                        <div onClick={ (e) => { handleLower(coll.itemType, coll.id); } } title="Send to back">
                             <img src='./img/arrow_down.png'></img>
                         </div>
                     </div>;
@@ -368,7 +388,7 @@ const CZSPanel = (props: any): JSX.Element => {
 
         let metadata_node: JSX.Element = <MenuItem></MenuItem>;
         if (link) {
-            metadata_node = <MenuItem className="layer-metadata" onClick={(e: any) => handleViewMetadataCollection()}>
+            metadata_node = <MenuItem className="layer-metadata" onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleViewMetadataCollection()}>
                 <ListItemIcon>
                     <img src='./img/metadata.png'></img>
                 </ListItemIcon>
@@ -377,13 +397,13 @@ const CZSPanel = (props: any): JSX.Element => {
         }
 
         return <Menu className="czs_menu_options" anchorEl={anchorEl} open={open} onClose={handleCloseContextMenu}>
-            <MenuItem onClick={(e: any) => handleZoomToCollection()}>
+            <MenuItem onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleZoomToCollection()}>
                 <ListItemIcon>
                     <img src='./img/zoom_in.png'></img>
                 </ListItemIcon>
                 <ListItemText>Zoom to</ListItemText>
             </MenuItem>
-            <MenuItem onClick={(e: any) => handleViewCapabilitiesCollection()}>
+            <MenuItem onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleViewCapabilitiesCollection()}>
                 <ListItemIcon>
                     <img src='./img/stars.png'></img>
                 </ListItemIcon>

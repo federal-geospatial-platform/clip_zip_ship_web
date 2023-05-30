@@ -12,4 +12,12 @@ export default class CZSUtils {
         return link;
     }
 
+    static sortAlphabetically = (string1: string, string2: string): number => {
+        if (string1 < string2)
+            return -1;
+        else if (string1 > string2)
+            return 1;
+        return 0;
+    }
+
 }

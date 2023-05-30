@@ -1,7 +1,7 @@
 // Import CZS Panel
 import CZSPanel from './czs_panel';
 import CZSEngine from './czs_engine';
-import { PyGeoAPICollectionsCollectionResponsePayload } from './czs_types';
+import { PyGeoAPICollectionsCollectionResponsePayload, ThemeCollections } from './czs_types';
 import CZSUtils from './czs_utils';
 
 /**
@@ -19,19 +19,19 @@ const App = (): JSX.Element => {
     const MAP_ID = "mapCZS";
     let czs_engine: CZSEngine;
 
-    function handleStartDrawing(e: any) {
+    function handleStartDrawing() {
         // Start the Engine drawing
         czs_engine.startDrawing();
     }
 
-    async function handleClearDrawing(e: any) {
+    async function handleClearDrawing() {
         // Clear the Engine drawing
         await czs_engine.clearDrawingAsync();
     }
 
-    async function handleExtractFeatures(e: any) {
+    async function handleExtractFeatures(email: string) {
         // Extract features
-        await czs_engine.extractFeaturesAsync(e.email);
+        await czs_engine.extractFeaturesAsync(email);
     }
 
     async function handleZoomToCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
@@ -52,19 +52,21 @@ const App = (): JSX.Element => {
         if (link) window.open(link.href, '_blank');
     }
 
-    async function handleHigher(e: any) {
+    async function handleHigher(coll_type: string, coll_id: string) {
         // Order the layer higher in z index
-        await czs_engine.layerOrderHigherAsync(e.coll_type, e.coll_id);
+        //console.log("handleHigher 1");
+        await czs_engine.layerOrderHigherAsync(coll_type, coll_id);
+        //console.log("handleHigher 1.5");
     }
 
-    async function handleLower(e: any) {
+    async function handleLower(coll_type: string, coll_id: string) {
         // Order the layer lower in z index
-        await czs_engine.layerOrderLowerAsync(e.coll_type, e.coll_id);
+        await czs_engine.layerOrderLowerAsync(coll_type, coll_id);
     }
 
-    async function handleCollectionCheckedChanged(e: any) {
+    async function handleCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
         // Update the checked list of collections
-        await czs_engine.updateCollectionCheckedAsync(e.list_key, e.themeColl, e.value, e.checked, e.checkedColls);
+        await czs_engine.updateCollectionCheckedAsync(list_key, themeColl, value, checked, checkedColls);
     }
 
     useEffect(() => {

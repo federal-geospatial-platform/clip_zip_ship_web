@@ -7,6 +7,16 @@
     "enter_email": "Entrer votre adresse courriel",
     "extract_features": "Extraire les données",
     "help_title":"Besoin d'aide?",
+    "layer_options": "Options...",
+    "zoom_to":"Cadrer la carte",
+    "view_capabilities":"Visualiser les capacités",
+    "view_metadata":"Visualiser les métadonnées",
+    "layer_bring_to_front": "Placer en avant",
+    "layer_send_to_back": "Placer en arrière",
+    "msg_pre_release": "Ceci est une version pre-alpha. Seulement pour fins d'expérimentation.",
+    "success_extraction_completed": "Extraction complété, regardez vos courriels!",
+    "warning_extraction_area_too_big": "Zone d'extraction trop grande pour la collection",
+    "error_some_elements_outside": "Certains éléments sont en dehors de l'étendu cartographique.",
     "help_text":"Bonjour,<br/>Pour soumettre votre demande d'extraction de données dynamique, il suffit de remplir les 3 conditions suivantes dans l'ordre que vous désirez:<ol><li>Sélectionner une ou plusieurs collections</li><li>Tracer un polygone de découpage sur la carte</li><li>Entrer votre adresse courriel</li></ol>"
   }
 }

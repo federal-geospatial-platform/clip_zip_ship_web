@@ -75,12 +75,12 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     //const classes = useStyles();
 
     useEffect(() => {
-        // Show temporary message
-        api.utilities.showMessage(MAP_ID, "This is a pre-alpha release. Only for experimentation purposes.");
-
         // Add CZS translations file
         i18n.addResourceBundle("en", "translation", T_EN);
         i18n.addResourceBundle("fr", "translation", T_FR);
+
+        // Show temporary message
+        api.utilities.showMessage(MAP_ID, t('czs.msg_pre_release'));
 
         // Listen to the engine load collections started event
         api.event.on(
@@ -169,7 +169,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT,
             (payload: any) => {
                 // Show error
-                api.utilities.showWarning(MAP_ID, "Extraction area too big for collection: " + payload.collection.title);
+                api.utilities.showWarning(MAP_ID, t('czs.warning_extraction_area_too_big') + ": " + payload.collection.title);
             },
             MAP_ID
         );
@@ -213,7 +213,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             CZS_EVENT_NAMES.ENGINE_EXTRACT_COMPLETED,
             (payload: any) => {
                 // Show message to user
-                api.utilities.showSuccess(MAP_ID, "Extraction completed, check your emails!");
+                api.utilities.showSuccess(MAP_ID, t('czs.success_extraction_completed'));
             },
             MAP_ID
         );
@@ -233,7 +233,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             CZS_EVENT_NAMES.ENGINE_ERROR_ZOOMING_OUTSIDE,
             (payload: any) => {
                 // Show warning
-                api.utilities.showWarning(MAP_ID, "Some elements were outside of the map extent limits.");
+                api.utilities.showWarning(MAP_ID, t('czs.error_some_elements_outside'));
             },
             MAP_ID
         );
@@ -357,7 +357,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
 
         let menu_more: JSX.Element = <span></span>;
         menu_more = <div className="layer-options layer-option">
-            <ListItem button title='Options...' onClick={ (e: any) => { handleMenuMore(e, coll); } }>
+            <ListItem button title={ t('czs.layer_options') } onClick={ (e: any) => { handleMenuMore(e, coll); } }>
                 <ListItemIcon>
                     <img src='./img/more.png'></img>
                 </ListItemIcon>
@@ -367,10 +367,10 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         let orders: JSX.Element = <span></span>;
         if (checkedCollections[key] && checkedCollections[key].includes(coll.id)) {
             orders = <div className={`layer-order-layers layer-option ${isOrderLoading.includes(coll.id) ? "loading" : ""}`}>
-                        <div onClick={ (e) => { handleHigher(coll.itemType, coll.id); } } title="Bring to front">
+                        <div onClick={ (e) => { handleHigher(coll.itemType, coll.id); } } title={ t('czs.layer_bring_to_front') }>
                             <img src='./img/arrow_up.png'></img>
                         </div>
-                        <div onClick={ (e) => { handleLower(coll.itemType, coll.id); } } title="Send to back">
+                        <div onClick={ (e) => { handleLower(coll.itemType, coll.id); } } title={ t('czs.layer_send_to_back') }>
                             <img src='./img/arrow_down.png'></img>
                         </div>
                     </div>;
@@ -392,7 +392,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                 <ListItemIcon>
                     <img src='./img/metadata.png'></img>
                 </ListItemIcon>
-                <ListItemText>View Metadata</ListItemText>
+                <ListItemText>{ t('czs.view_metadata') }</ListItemText>
             </MenuItem>
         }
 
@@ -401,13 +401,13 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                 <ListItemIcon>
                     <img src='./img/zoom_in.png'></img>
                 </ListItemIcon>
-                <ListItemText>Zoom to</ListItemText>
+                <ListItemText>{ t('czs.zoom_to') }</ListItemText>
             </MenuItem>
             <MenuItem onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleViewCapabilitiesCollection()}>
                 <ListItemIcon>
                     <img src='./img/stars.png'></img>
                 </ListItemIcon>
-                <ListItemText>View Capabilities</ListItemText>
+                <ListItemText>{ t('czs.view_capabilities') }</ListItemText>
             </MenuItem>
             { metadata_node }
         </Menu>;

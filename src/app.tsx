@@ -1,6 +1,8 @@
 // Import CZS Panel
 import CZSPanel from './czs_panel';
 import CZSEngine from './czs_engine';
+import { PyGeoAPICollectionsCollectionResponsePayload } from './czs_types';
+import CZSUtils from './czs_utils';
 
 /**
  * Create the application module for Clip Zip Ship. With GeoView, most is delegated to it.
@@ -30,6 +32,24 @@ const App = (): JSX.Element => {
     async function handleExtractFeatures(e: any) {
         // Extract features
         await czs_engine.extractFeaturesAsync(e.email);
+    }
+
+    async function handleZoomToCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
+        // Zoom to collection
+        await czs_engine.zoomToCollection(parseInt(collection?.crs[0]), collection.wkt);
+    }
+
+    async function handleViewCapabilitiesCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
+        // Open a new window on the url
+        window.open(QGIS_SERVICE_URL_ROOT + collection.org_schema + "/" + collection.parent + '?service=WMS&version=1.3.0&request=GetCapabilities&LAYERS=' + collection.short_name, '_blank');
+    }
+
+    async function handleViewMetadataCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
+        // Get info
+        let link = CZSUtils.getContentMetadata(collection.links);
+
+        // If found, open a new tab on the url
+        if (link) window.open(link.href, '_blank');
     }
 
     async function handleHigher(e: any) {
@@ -70,6 +90,9 @@ const App = (): JSX.Element => {
                     handleStartDrawing,
                     handleClearDrawing,
                     handleExtractFeatures,
+                    handleZoomToCollection,
+                    handleViewCapabilitiesCollection,
+                    handleViewMetadataCollection,
                     handleHigher,
                     handleLower,
                     handleCollectionCheckedChanged

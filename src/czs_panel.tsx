@@ -1,11 +1,12 @@
 import {
     CZS_EVENT_NAMES,
     ThemeCollections,
-    PyGeoAPICollectionsCollectionResponsePayload,
-    PyGeoAPICollectionsCollectionLinkResponsePayload
+    PyGeoAPICollectionsCollectionResponsePayload
 } from './czs_types';
 import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
+import CZSUtils from './czs_utils';
+import { renderToStaticMarkup } from "react-dom/server"
 
 /**
  * Create a container containing a leaflet map using the GeoView viewer
@@ -20,7 +21,7 @@ const CZSPanel = (props: any): JSX.Element => {
     const { api, react, ui, useTranslation } = cgpv;
     const { createElement: h, useState, useEffect } = react;
     const { makeStyles, useTheme } = ui;
-    const { Button, CircularProgress, Accordion, CheckboxListAlex, TextField } = ui.elements;
+    const { Button, CircularProgress, Accordion, CheckboxListAlex, TextField, Menu, MenuItem, ListItem, ListItemText, ListItemIcon } = ui.elements;
     const MAP_ID = "mapCZS";
 
     // Translation
@@ -31,7 +32,9 @@ const CZSPanel = (props: any): JSX.Element => {
     const [collectionsCoverages, _setCollectionsCoverages] = useState([]);
     const [checkedCollections, _setCheckedCollections] = useState({});
     const [clearButtonState, _setClearButtonState] = useState({});
-    //const [extractButtonActive, _setExtractButtonActive] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+    const [contextMenuCollection, setContextMenuCollection] = useState(null);
     const [hasViewedCollections, _setHasViewedCollections] = useState(false);
     const [email, _setEmail] = useState("alexandre.roy@nrcan-rncan.gc.ca");
     const [isLoading, _setIsLoading] = useState(false);
@@ -163,7 +166,7 @@ const CZSPanel = (props: any): JSX.Element => {
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED,
             (payload: any) => {
-                _setIsOrderLoading([... payload.collections]);
+                _setIsOrderLoading([...payload.collections]);
             },
             MAP_ID
         );
@@ -211,6 +214,15 @@ const CZSPanel = (props: any): JSX.Element => {
 
         // Listen to the engine error event
         api.event.on(
+            CZS_EVENT_NAMES.ENGINE_ERROR_ZOOMING_OUTSIDE,
+            (payload: any) => {
+                api.utilities.showWarning(MAP_ID, "Some elements were outside of the map extent limits.");
+            },
+            MAP_ID
+        );
+
+        // Listen to the engine error event
+        api.event.on(
             CZS_EVENT_NAMES.ENGINE_ERROR_SHOWING_COLLECTION,
             (payload: any) => {
                 api.utilities.showError(MAP_ID, payload.error);
@@ -241,6 +253,29 @@ const CZSPanel = (props: any): JSX.Element => {
         props.handleExtractFeatures?.({ email: email });
     }
 
+    function handleMenuMore(e: any, coll: PyGeoAPICollectionsCollectionResponsePayload) {
+        setContextMenuCollection(coll);
+        setAnchorEl(e.currentTarget);
+    }
+
+    function handleZoomToCollection() {
+        props.handleZoomToCollection?.(contextMenuCollection);
+        // Close popup
+        setAnchorEl(null);
+    }
+
+    function handleViewMetadataCollection() {
+        props.handleViewMetadataCollection?.(contextMenuCollection);
+        // Close popup
+        setAnchorEl(null);
+    }
+
+    function handleViewCapabilitiesCollection() {
+        props.handleViewCapabilitiesCollection?.(contextMenuCollection);
+        // Close popup
+        setAnchorEl(null);
+    }
+
     function handleHigher(e: any, coll_type: string, coll_id: string) {
         props.handleHigher?.({ coll_type, coll_id });
     }
@@ -258,20 +293,25 @@ const CZSPanel = (props: any): JSX.Element => {
         _setEmail(txtEmail?.value);
     }
 
-    function getContentThemes(list_key: string, thmColls: ThemeCollections[]) {
+    function handleCloseContextMenu() {
+        // Close popup
+        setAnchorEl(null);
+    }
+
+    function renderContentThemes(list_key: string, thmColls: ThemeCollections[]) {
         // For each theme
         return <Accordion
             className="accordion-theme"
             items={Object.values(thmColls).map((thmColl: ThemeCollections) => (
                 {
                     title: thmColl.theme.name + " (" + thmColl.collections.length + ")",
-                    content: getContentColls(list_key, thmColl)
+                    content: renderContentColls(list_key, thmColl)
                 }
             ))}
         ></Accordion>;
     }
 
-    function getContentColls(list_key: string, thmColl: ThemeCollections) {
+    function renderContentColls(list_key: string, thmColl: ThemeCollections) {
         // If a regular feature/coverage collection
         if (thmColl.collections && thmColl.collections.length > 0) {
             let key = list_key + "_" + thmColl.theme.id;
@@ -281,7 +321,7 @@ const CZSPanel = (props: any): JSX.Element => {
                     return {
                         display: coll.title,
                         value: coll.id,
-                        content: getContentLayer(key, coll)
+                        content: renderContentLayer(key, coll)
                     };
                 })}
                 checkedValues={checkedCollections[key] || []}
@@ -293,58 +333,69 @@ const CZSPanel = (props: any): JSX.Element => {
             return null;
     }
 
-    function getContentLayer(key: string, coll: PyGeoAPICollectionsCollectionResponsePayload) {
-        let link = getContentMetadata(coll.links);
-        let html_link: JSX.Element = <span></span>;
-        if (link) {
-            html_link = <div className="layer-metadata">
-                    <a href={link.href} title={link.title} target='_blank'>
-                        <img src='./img/metadata.png' style={{
-                            'width': '20px',
-                            'height': '20px',
-                            'marginTop': '2px',
-                            'marginLeft': '5px',
-                        }}></img>
-                    </a>
-                </div>;
-        }
+    function renderContentLayer(key: string, coll: PyGeoAPICollectionsCollectionResponsePayload) {
+
+        let menu_more: JSX.Element = <span></span>;
+        menu_more = <div className="layer-options layer-option">
+            <ListItem button title='Options...' onClick={ (e: any) => { handleMenuMore(e, coll); } }>
+                <ListItemIcon>
+                    <img src='./img/more.png'></img>
+                </ListItemIcon>
+            </ListItem>
+        </div>;
+
         let orders: JSX.Element = <span></span>;
         if (checkedCollections[key] && checkedCollections[key].includes(coll.id)) {
-            orders = <div className={`layer-order-layers ${isOrderLoading.includes(coll.id) ? "loading" : ""}`}>
-                        <a onClick={ (e) => { handleHigher(e, coll.itemType, coll.id); } } title="Bring to front">
-                            <img src='./img/arrow_up.png' style={{
-                                'width': '20px',
-                                'height': '20px',
-                                'marginTop': '2px',
-                                'marginLeft': '5px',
-                            }}></img>
-                        </a>
-                        <a onClick={ (e) => { handleLower(e, coll.itemType, coll.id); } } title="Send to back">
-                            <img src='./img/arrow_down.png' style={{
-                                'width': '20px',
-                                'height': '20px',
-                                'marginTop': '2px',
-                                'marginLeft': '5px',
-                            }}></img>
-                        </a>
+            orders = <div className={`layer-order-layers layer-option ${isOrderLoading.includes(coll.id) ? "loading" : ""}`}>
+                        <div onClick={ (e) => { handleHigher(e, coll.itemType, coll.id); } } title="Bring to front">
+                            <img src='./img/arrow_up.png'></img>
+                        </div>
+                        <div onClick={ (e) => { handleLower(e, coll.itemType, coll.id); } } title="Send to back">
+                            <img src='./img/arrow_down.png'></img>
+                        </div>
                     </div>;
         }
-        return <div>{html_link}{orders}</div>;
+        return <div className="layer-options-wrapper">{menu_more}{orders}</div>;
     }
 
-    function getContentMetadata(links: PyGeoAPICollectionsCollectionLinkResponsePayload[]): PyGeoAPICollectionsCollectionLinkResponsePayload | null {
-        // Find the canonical metadata url if any
+    function renderMenuOptions() {
+        //console.log("renderMenuOptions", contextMenu);
+
+        // Read info
         let link = null;
-        links.forEach((l) => {
-            if (l.type == "text/html" && l.rel == "canonical")
-                link = l;
-        });
-        return link;
+        if (contextMenuCollection)
+            link = CZSUtils.getContentMetadata(contextMenuCollection.links);
+
+        let metadata_node: JSX.Element = <MenuItem></MenuItem>;
+        if (link) {
+            metadata_node = <MenuItem className="layer-metadata" onClick={(e: any) => handleViewMetadataCollection()}>
+                <ListItemIcon>
+                    <img src='./img/metadata.png'></img>
+                </ListItemIcon>
+                <ListItemText>View Metadata</ListItemText>
+            </MenuItem>
+        }
+
+        return <Menu className="czs_menu_options" anchorEl={anchorEl} open={open} onClose={handleCloseContextMenu}>
+            <MenuItem onClick={(e: any) => handleZoomToCollection()}>
+                <ListItemIcon>
+                    <img src='./img/zoom_in.png'></img>
+                </ListItemIcon>
+                <ListItemText>Zoom to</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={(e: any) => handleViewCapabilitiesCollection()}>
+                <ListItemIcon>
+                    <img src='./img/stars.png'></img>
+                </ListItemIcon>
+                <ListItemText>View Capabilities</ListItemText>
+            </MenuItem>
+            { metadata_node }
+        </Menu>;
     }
 
     // Return coordinates
     return (
-        <div>
+        <div className="czs_panel">
             <div>
                 <Button
                     type="text"
@@ -373,7 +424,7 @@ const CZSPanel = (props: any): JSX.Element => {
                     items={[
                         {
                             title: t('czs.list_feature_colls'),
-                            content: getContentThemes("features", collectionsFeatures)
+                            content: renderContentThemes("features", collectionsFeatures)
                         }
                     ]}
                 ></Accordion>
@@ -381,7 +432,7 @@ const CZSPanel = (props: any): JSX.Element => {
                     items={[
                         {
                             title: t('czs.list_coverage_colls'),
-                            content: getContentThemes("coverages", collectionsCoverages)
+                            content: renderContentThemes("coverages", collectionsCoverages)
                         }
                     ]}
                 ></Accordion>
@@ -413,6 +464,7 @@ const CZSPanel = (props: any): JSX.Element => {
                     }
                 ]}
             ></Accordion>
+            { renderMenuOptions() }
         </div>
     );
 

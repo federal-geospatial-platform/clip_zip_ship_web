@@ -2,6 +2,10 @@ h1 {
   color: red;
 }
 
+.czs_panel {
+  position: relative;
+}
+
 .accordion-group {
   font-size: 0.9rem;
   margin: 10px 0px;
@@ -11,12 +15,11 @@ h1 {
   font-size: inherit;
 }
 
-.Checkbox-content-root {
-  min-width: 90px;
+.layer-option {
+  position: relative;
+  display: inline-block;
 }
-
-.layer-metadata,
-.layer-order-layers {
+.layer-order-layers div {
   display: inline-block;
 }
 
@@ -30,6 +33,12 @@ h1 {
 
 .MuiAccordion-root.accordion-theme  {
   background-color: #0088cb78;
+}
+
+.czs_panel .MuiListItem-root,
+.czs_panel .MuiListItem-root:hover,
+.MuiMenuItem-root.MuiMenuItem-gutters {
+  color: black;
 }
 
 .accordion-theme ul {
@@ -74,6 +83,35 @@ h1 {
 .layer-order-layers.loading a {
   pointer-events: none;
 }
+
+.MuiPaper-root.MuiMenu-paper {
+  background-color: #a1cdff;
+}
+
+.MuiMenuItem-root.MuiMenuItem-gutters {
+  padding: 5px 10px;
+}
+
+.layer-options-wrapper {
+  min-width: 100px;
+}
+
+.layer-option {
+  vertical-align: middle;
+}
+
+.layer-option .MuiListItemIcon-root {
+  min-width: inherit;
+}
+
+.layer-option img,
+.czs_menu_options img {
+  height: 20px;
+  width: 20px;
+  vertical-align: middle;
+  margin: 0px 5px 0px 5px;
+}
+
 
 .is-debug {
   background-color: red;

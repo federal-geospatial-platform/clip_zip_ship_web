@@ -69,6 +69,7 @@ export type CZSEngineEventKey =
     | 'ENGINE_EXTRACT_COMPLETED'
     | 'ENGINE_LAYER_ORDERED'
     | 'ENGINE_ERROR'
+    | 'ENGINE_ERROR_ZOOMING_OUTSIDE'
     | 'ENGINE_ERROR_SHOWING_COLLECTION'
     | 'ENGINE_ERROR_EXTRACTING'
 ;
@@ -93,6 +94,7 @@ export type CZSEngineEventStringId =
     | 'czs/engine/ENGINE-EXTRACT_COMPLETED'
     | 'czs/engine/ENGINE-LAYER_ORDERED'
     | 'czs/engine/ENGINE-ERROR'
+    | 'czs/engine/ENGINE_ERROR_ZOOMING_OUTSIDE'
     | 'czs/engine/ENGINE-ERROR_SHOWING_COLLECTION'
     | 'czs/engine/ENGINE-ERROR_EXTRACTING'
 ;
@@ -177,6 +179,11 @@ export const CZS_EVENT_NAMES: Record<CZSEngineEventKey, CZSEngineEventStringId> 
      * Event is triggered when the engine has generated an error
      */
     ENGINE_ERROR: 'czs/engine/ENGINE-ERROR',
+
+    /**
+     * Event is triggered when the engine has tried to zoom outside the map extent limits
+     */
+    ENGINE_ERROR_ZOOMING_OUTSIDE: 'czs/engine/ENGINE_ERROR_ZOOMING_OUTSIDE',
 
     /**
      * Event is triggered when the engine has generated an error when trying to show a collection

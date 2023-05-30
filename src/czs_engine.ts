@@ -20,11 +20,18 @@ export default class CZSEngine {
     static Z_INDEX_VECTORS: number = 101;
     static Z_INDEX_RASTERS: number = 100;
     static Z_INDEX_DRAWING: number = 1000;
+    static COLLECTION_FOOTPRINT_CRS: number = 4617;
+    static MAP_LIMITS_X_MIN: number = -2750565;
+    static MAP_LIMITS_Y_MIN: number = -936657;
+    static MAP_LIMITS_X_MAX: number = 3583872;
+    static MAP_LIMITS_Y_MAX: number = 4659267;
+    static MAP_LIMITS_CRS: number = 3978;
 
     // Attributes
     _cgpvapi: any;
     _mapID: string;
     _map: any;
+    _mapLimits: any;
     _lang: string = "en";
     _drawInter: any;
     _modifInter: any;
@@ -47,6 +54,12 @@ export default class CZSEngine {
         this._mapID = mapID;
         this._map = this._cgpvapi.map(mapID);
         this._lang = language;
+
+        // Get the map limits in current map projection
+        this._mapLimits = this._cgpvapi.geoUtilities.getExtent([CZSEngine.MAP_LIMITS_X_MIN,
+            CZSEngine.MAP_LIMITS_Y_MIN,
+            CZSEngine.MAP_LIMITS_X_MAX,
+            CZSEngine.MAP_LIMITS_Y_MAX], CZSEngine.MAP_LIMITS_CRS, this._map.currentProjection);
 
         // Init
         this.init();
@@ -95,6 +108,50 @@ export default class CZSEngine {
             },
             this._mapID
         ); // End "on" handler
+    }
+
+    onLoadCollectionsStarted = (geometry: any) => {
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_STARTED, handlerName: this._mapID, geometry: geometry });
+    }
+
+    onLoadCollectionsEnded = () => {
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_ENDED, handlerName: this._mapID });
+    }
+
+    onLoadCollectionsFeatures = (features: any) => {
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_FEATURES, handlerName: this._mapID, collections: features });
+    }
+
+    onLoadCollectionsCoverages = (coverages: any) => {
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_COVERAGES, handlerName: this._mapID, collections: coverages });
+    }
+
+    onUpdateLayersStarted = () => {
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_STARTED, handlerName: this._mapID });
+    }
+
+    onUpdateLayersEnded = (collections: any) => {
+        //console.log("Updated collections", collections);
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED, handlerName: this._mapID, collections: collections });
+    }
+
+    onErrorZoomingOutside = () => {
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR_ZOOMING_OUTSIDE, handlerName: this._mapID });
+    }
+
+    onErrorShowingCollection = (err: any) => {
+        console.log("ERROR_SHOWING_COLLECTION", err);
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR_SHOWING_COLLECTION, handlerName: this._mapID, error: err });
+    }
+
+    onErrorExtracting = (err: any) => {
+        console.log("ERROR_EXTRACTING", err);
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR_EXTRACTING, handlerName: this._mapID, error: err });
+    }
+
+    onError = (err: any) => {
+        console.log("ERROR", err);
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR, handlerName: this._mapID, error: err });
     }
 
     startDrawing = (): void => {
@@ -213,7 +270,7 @@ export default class CZSEngine {
             this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_STARTED, handlerName: this._mapID });
 
             // Proceed
-            let res = await CZSServices.extractFeaturesAsync(Object.keys(this._viewedCollections), email, this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), 3978)
+            let res = await CZSServices.extractFeaturesAsync(Object.keys(this._viewedCollections), email, this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection)
 
             // Completed
             this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_COMPLETED, handlerName: this._mapID, result: res });
@@ -234,44 +291,31 @@ export default class CZSEngine {
         }
     }
 
-    onLoadCollectionsStarted = (geometry: any) => {
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_STARTED, handlerName: this._mapID, geometry: geometry });
-    }
+    zoomToCollection = async (crs: number, coll_wkt: string) => {
+        // Convert wkt to geometry
+        const geom = this._cgpvapi.geoUtilities.wktToGeometry(coll_wkt);
 
-    onLoadCollectionsEnded = () => {
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_ENDED, handlerName: this._mapID });
-    }
+        // Reproject in current map projection
+        geom.transform(
+            `EPSG:${CZSEngine.COLLECTION_FOOTPRINT_CRS}`,
+            this._cgpvapi.projection.projections[this._map.currentProjection]
+        );
 
-    onLoadCollectionsFeatures = (features: any) => {
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_FEATURES, handlerName: this._mapID, collections: features });
-    }
+        // Get extent
+        let ext = geom.getExtent();
 
-    onLoadCollectionsCoverages = (coverages: any) => {
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_COVERAGES, handlerName: this._mapID, collections: coverages });
-    }
+        // If the geometry falls outside the basemap boundaries
+        let wasOutside = false;
+        if (ext[0] < this._mapLimits[0]) wasOutside = true;
+        if (ext[1] < this._mapLimits[1]) wasOutside = true;
+        if (ext[2] > this._mapLimits[2]) wasOutside = true;
+        if (ext[3] > this._mapLimits[3]) wasOutside = true;
 
-    onUpdateLayersStarted = () => {
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_STARTED, handlerName: this._mapID });
-    }
+        // Zoom to geometry
+        this._map.zoomToExtent(ext, { padding: [100, 100, 100, 100], duration: 1000 });
 
-    onUpdateLayersEnded = (collections: any) => {
-        //console.log("Updated collections", collections);
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED, handlerName: this._mapID, collections: collections });
-    }
-
-    onErrorShowingCollection = (err: any) => {
-        console.log("ERROR_SHOWING_COLLECTION", err);
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR_SHOWING_COLLECTION, handlerName: this._mapID, error: err });
-    }
-
-    onErrorExtracting = (err: any) => {
-        console.log("ERROR_EXTRACTING", err);
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR_EXTRACTING, handlerName: this._mapID, error: err });
-    }
-
-    onError = (err: any) => {
-        console.log("ERROR", err);
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_ERROR, handlerName: this._mapID, error: err });
+        // If was outside
+        if (wasOutside) this.onErrorZoomingOutside();
     }
 
     higherAsync = async (coll_type: string, collection_id: string): Promise<boolean> => {
@@ -355,7 +399,7 @@ export default class CZSEngine {
                     this.onLoadCollectionsStarted(this._geometry);
 
                     // Get the collections
-                    let colls: PyGeoAPICollectionsCollectionResponsePayload[] = await CZSServices.getCollectionsPOSTAsync(this._lang + "-CA", this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), 3978);
+                    let colls: PyGeoAPICollectionsCollectionResponsePayload[] = await CZSServices.getCollectionsPOSTAsync(this._lang + "-CA", this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection);
 
                     // Group the collections by types and then by themes
                     this._collections = [];
@@ -528,7 +572,7 @@ export default class CZSEngine {
 
     addCollectionVectorAsync = async (coll_info: PyGeoAPICollectionsCollectionResponsePayload, geom?: any): Promise<boolean> => {
         // Query
-        let coll_res: PyGeoAPIRecordsResponsePayload = await CZSServices.getFeaturesAsync(coll_info, this._cgpvapi.geoUtilities.geometryToWKT(geom), 3978);
+        let coll_res: PyGeoAPIRecordsResponsePayload = await CZSServices.getFeaturesAsync(coll_info, this._cgpvapi.geoUtilities.geometryToWKT(geom), this._map.currentProjection);
 
         //console.log("Records", coll_res);
         if (coll_res.data.features && coll_res.data.features.length > 0) {
@@ -570,7 +614,7 @@ export default class CZSEngine {
                     'layerId': coll_info.short_name,
                     'layerName': { 'en': coll_info.title, 'fr': coll_info.title },
                     'source': {
-                        'dataProjection': "EPSG:4326" // Default..
+                        'dataProjection': "EPSG:4326" // Default.. will be set later
                     },
                 }
             ]
@@ -644,7 +688,7 @@ export default class CZSEngine {
         this._map.layer.vector.setActiveGeometryGroup(coll_info.id);
 
         // Load the features in the group
-        this.loadFeaturesInGroup([coll_info.wkt], 4617, "red", "red");
+        this.loadFeaturesInGroup([coll_info.wkt], CZSEngine.COLLECTION_FOOTPRINT_CRS, "red", "red");
 
         // Emit
         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT, handlerName: this._mapID, collection: coll_info });
@@ -749,18 +793,18 @@ export default class CZSEngine {
 
                     // For each line segment
                     rec.geometry_clipped.coordinates.forEach((coords: number[]) => {
-                        this._map.layer.vector.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1 } });
+                        this._map.layer.vector.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5 } });
                     });
                 }
 
                 else if (rec.geometry_clipped.type == "Polygon") {
-                    this._map.layer.vector.addPolygon(rec.geometry_clipped.coordinates, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1, fillColor: colorClip, fillOpacity: 0.3 } });
+                    this._map.layer.vector.addPolygon(rec.geometry_clipped.coordinates, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
                 }
 
                 else if (rec.geometry_clipped.type == "MultiPolygon") {
                     // For each polygon
                     rec.geometry_clipped.coordinates.forEach((coords: number[][]) => {
-                        this._map.layer.vector.addPolygon(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1, fillColor: colorClip, fillOpacity: 0.3 } });
+                        this._map.layer.vector.addPolygon(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
                     });
                 }
 

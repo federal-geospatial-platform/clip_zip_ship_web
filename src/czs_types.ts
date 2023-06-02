@@ -1,17 +1,34 @@
 export class ThemeCollections {
     theme: ThemeItem;
-    collections: Array<PyGeoAPICollectionsCollectionResponsePayload>;
+    parents: Array<ParentCollections>;
 
-    constructor(theme: ThemeItem, collections: Array<PyGeoAPICollectionsCollectionResponsePayload>) {
+    constructor(theme: ThemeItem, parents: Array<ParentCollections>) {
       this.theme = theme;
-      this.collections = collections;
+      this.parents = parents;
     }
 };
 
+export class ParentCollections {
+    theme: ThemeItem;
+    parent: ParentItem;
+    collections: Array<PyGeoAPICollectionsCollectionResponsePayload>;
+
+    constructor(theme: ThemeItem, parent: ParentItem, collections: Array<PyGeoAPICollectionsCollectionResponsePayload>) {
+        this.theme = theme;
+        this.parent = parent;
+        this.collections = collections;
+    }
+}
+
 export type ThemeItem = {
     id: string;
-    name: string;
+    title: string;
 };
+
+export type ParentItem = {
+    id: string;
+    title: string;
+}
 
 export type PyGeoAPICollectionsResponsePayload = {
     collections: PyGeoAPICollectionsCollectionResponsePayload[]
@@ -25,6 +42,7 @@ export type PyGeoAPICollectionsCollectionResponsePayload = {
     description: string;
     links: PyGeoAPICollectionsCollectionLinkResponsePayload[];
     parent: string;
+    parent_title: string;
     short_name: string;
     org_schema: string;
     crs: string[];
@@ -61,6 +79,7 @@ export type CZSEngineEventKey =
     | 'ENGINE_UPDATE_VIEWED_COLLECTIONS_FEATURES'
     | 'ENGINE_UPDATE_VIEWED_COLLECTIONS_COVERAGES'
     | 'ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT'
+    | 'ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM'
     | 'ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED'
     | 'ENGINE_COLLECTION_CHANGED_STARTED'
     | 'ENGINE_COLLECTION_CHANGED_ENDED'
@@ -86,6 +105,7 @@ export type CZSEngineEventStringId =
     | 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_FEATURES'
     | 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_COVERAGES'
     | 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_FOOTPRINT'
+    | 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM'
     | 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_ENDED'
     | 'czs/engine/ENGINE-COLLECTION_CHANGED_STARTED'
     | 'czs/engine/ENGINE-COLLECTION_CHANGED_ENDED'
@@ -139,6 +159,11 @@ export const CZS_EVENT_NAMES: Record<CZSEngineEventKey, CZSEngineEventStringId> 
      * Event is triggered when the engine has loaded a features collection on map
      */
     ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT: 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_FOOTPRINT',
+
+    /**
+     * Event is triggered when the engine has tried loading a collection on map, but there was no geometry
+     */
+    ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM: 'czs/engine/ENGINE-UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM',
 
     /**
      * Event is triggered when the engine has finished updating the list of viewed collections based on the currently checked collections and a given geometry

@@ -4,19 +4,13 @@ module.exports = {
 	mode: 'development',
 	entry: './src/main.tsx',
 	devtool: 'inline-source-map',
-	output: {
-		path: path.join(__dirname, '/dist'),
-		filename: 'bundle.js'
-	},
-	devtool: 'inline-source-map',
 	devServer: {
-		static: './dist',
+		static: './dist'
 	},
 	output: {
 		path: path.resolve(__dirname, 'dist'),
 		filename: '[name].js',
-		chunkFilename: '[name].js',
-		assetModuleFilename: 'src/assets/images/[name].[ext]',
+		chunkFilename: '[name].js'
 	},
 	resolve: {
 		extensions: ['.mjs', '.ts', '.tsx', '.js', '.jsx'],
@@ -60,7 +54,10 @@ module.exports = {
 				test: /\.(png|jpg|gif|svg|eot|ttf|woff)$/,
 				use: [
 					{
-					  loader: 'file-loader',
+						loader: 'file-loader',
+						options: {
+							name: 'img/[name].[ext]'
+						}
 					},
 				  ],
 			},

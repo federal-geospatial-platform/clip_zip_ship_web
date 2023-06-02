@@ -16,6 +16,7 @@
     "msg_pre_release": "This is a pre-alpha release. Only for experimentation purposes.",
     "success_extraction_completed": "Extraction completed, check your emails!",
     "warning_extraction_area_too_big": "Extraction area too big for collection",
+    "warning_extraction_area_missing": "Missing an extraction area, only showing the data footprints",
     "error_some_elements_outside": "Some elements were outside of the map extent limits.",
     "help_text": "Hi,<br/>To submit your dynamic data extraction request, you must meet the following 3 criterias in the order of your choice:<ol><li>Select one or many collections</li><li>Draw an extraction polygon on the map</li><li>Type in your email address</li></ol>"
   }

@@ -1,14 +1,10 @@
-h1 {
-  color: red;
-}
-
 .czs_panel {
   position: relative;
 }
 
 .accordion-group {
   font-size: 0.9rem;
-  margin: 10px 0px;
+  margin-bottom: 10px;
 }
 
 .accordion-group .MuiTypography-root {
@@ -31,10 +27,6 @@ h1 {
   background-color: #005fcb52;
 }
 
-.MuiAccordion-root.accordion-theme  {
-  background-color: #0088cb78;
-}
-
 .czs_panel .MuiListItem-root,
 .czs_panel .MuiListItem-root:hover,
 .MuiMenuItem-root.MuiMenuItem-gutters {
@@ -43,18 +35,6 @@ h1 {
 
 .accordion-theme ul {
   cursor: pointer;
-}
-.accordion-theme.MuiAccordion-root {
-  box-shadow: none;
-}
-
-.need-help {
-  background-color: #e4b152;
-}
-
-.help-text {
-  font-size: smaller;
-  padding: 0px 10px;
 }
 
 .loading-spinner-container {
@@ -88,10 +68,6 @@ h1 {
   background-color: #a1cdff;
 }
 
-.MuiMenuItem-root.MuiMenuItem-gutters {
-  padding: 5px 10px;
-}
-
 .layer-options-wrapper {
   min-width: 100px;
 }
@@ -112,6 +88,14 @@ h1 {
   margin: 0px 5px 0px 5px;
 }
 
+.need-help {
+  background-color: #e4b152;
+}
+
+.help-text {
+  font-size: smaller;
+  padding: 0px 10px;
+}
 
 .is-debug {
   background-color: red;

@@ -1,7 +1,7 @@
 // Import CZS Panel
 import CZSPanel from './czs_panel';
 import CZSEngine from './czs_engine';
-import { PyGeoAPICollectionsCollectionResponsePayload, ThemeCollections } from './czs_types';
+import { PyGeoAPICollectionsCollectionResponsePayload, ParentCollections } from './czs_types';
 import CZSUtils from './czs_utils';
 
 /**
@@ -54,9 +54,7 @@ const App = (): JSX.Element => {
 
     async function handleHigher(coll_type: string, coll_id: string) {
         // Order the layer higher in z index
-        //console.log("handleHigher 1");
         await czs_engine.layerOrderHigherAsync(coll_type, coll_id);
-        //console.log("handleHigher 1.5");
     }
 
     async function handleLower(coll_type: string, coll_id: string) {
@@ -64,9 +62,9 @@ const App = (): JSX.Element => {
         await czs_engine.layerOrderLowerAsync(coll_type, coll_id);
     }
 
-    async function handleCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
+    async function handleCollectionCheckedChanged(value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]) {
         // Update the checked list of collections
-        await czs_engine.updateCollectionCheckedAsync(list_key, themeColl, value, checked, checkedColls);
+        await czs_engine.updateCollectionCheckedAsync(value, checked, parentColl, checkedColls);
     }
 
     useEffect(() => {

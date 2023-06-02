@@ -3,10 +3,12 @@ import {
     CZS_EVENT_NAMES,
     ThemeCollections,
     PyGeoAPICollectionsCollectionResponsePayload,
-    PyGeoAPIRecordsResponsePayload
+    PyGeoAPIRecordsResponsePayload,
+    ParentCollections
 } from './czs_types';
 import CZSUtils from './czs_utils';
 import CZSServices from './czs_services';
+import ImageMarkerGreen from './assets/images/Marker_green.png';
 
 
 /**
@@ -38,8 +40,8 @@ export default class CZSEngine {
     _drawInter: any;
     _modifInter: any;
     _geometry: any | undefined;
-    _collections: Array<PyGeoAPICollectionsCollectionResponsePayload> = [];
-    _checkedCollections: any = {};
+    _collections: PyGeoAPICollectionsCollectionResponsePayload[] = [];
+    _checkedCollections: any = [];
     _viewedCollections: any = {};
     _orderingCollections: any = [];
     _isDebug: boolean = window.location.hostname === "localhost";
@@ -134,7 +136,7 @@ export default class CZSEngine {
 
     onUpdateLayersEnded = (collections: any) => {
         //console.log("Updated collections", collections);
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED, handlerName: this._mapID, collections: collections });
+        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED, handlerName: this._mapID, viewedCollections: collections });
     }
 
     onErrorZoomingOutside = () => {
@@ -203,19 +205,18 @@ export default class CZSEngine {
         return await this.loadCollectionsAsync(geom);
     }
 
-    updateCollectionCheckedAsync = async (list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>): Promise<boolean> => {
+    updateCollectionCheckedAsync = async (value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]): Promise<boolean> => {
         try {
             // Find the collection information for that collection id
             let coll_info = this.findCollectionFromID(value);
 
             // Replace it
-            const the_key = list_key + "_" + themeColl.theme.id;
-            this._checkedCollections[the_key] = checkedColls;
+            this._checkedCollections = checkedColls;
 
             // If found
             if (coll_info) {
                 // Start loading
-                this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_STARTED, handlerName: this._mapID, checkedCollections: this._checkedCollections });
+                this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_STARTED, handlerName: this._mapID, parentCollection: parentColl, checkedCollections: checkedColls });
 
                 // If showing
                 if (checked) {
@@ -224,6 +225,12 @@ export default class CZSEngine {
                         // Done loading
                         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_ENDED, handlerName: this._mapID, viewedCollections: this._viewedCollections });
                     });
+
+                    // If there was no geometry
+                    if (!this._geometry) {
+                        // Emit
+                        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM, handlerName: this._mapID, collection: coll_info });
+                    }
                 }
 
                 else {
@@ -247,6 +254,9 @@ export default class CZSEngine {
     }
 
     layerOrderHigherAsync = async (coll_type: string, coll_id: string): Promise<boolean> => {
+        // If already ordering the layer
+        if (this._orderingCollections.indexOf(coll_id) >= 0) return false;
+
         this._orderingCollections.push(coll_id);
         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED, handlerName: this._mapID, collections: this._orderingCollections });
         return await this.higherAsync(coll_type, coll_id).finally(() => {
@@ -257,6 +267,9 @@ export default class CZSEngine {
     }
 
     layerOrderLowerAsync = async (coll_type: string, coll_id: string): Promise<boolean> => {
+        // If already ordering the layer
+        if (this._orderingCollections.indexOf(coll_id) >= 0) return false;
+
         this._orderingCollections.push(coll_id);
         this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED, handlerName: this._mapID, collections: this._orderingCollections });
         return await this.lowerAsync(coll_type, coll_id).finally(() => {
@@ -333,13 +346,10 @@ export default class CZSEngine {
 
         else {
             // Raster type, those are added like a regular layer
-            //console.log("higherAsync 1");
             const lyr = await this._map.layer.getGeoviewLayerByIdAsync(collection_id, true);
             let zindex = lyr.gvLayers.getZIndex();
             zindex++;
-            //console.log("higherAsync 1.3")
             await this.setZIndexAsync(lyr, zindex);
-            //console.log("higherAsync 1.5")
             return true;
         }
     }
@@ -406,10 +416,10 @@ export default class CZSEngine {
                     // Get the collections
                     let colls: PyGeoAPICollectionsCollectionResponsePayload[] = await CZSServices.getCollectionsPOSTAsync(this._lang + "-CA", this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection);
 
-                    // Group the collections by types and then by themes
+                    // Group the collections by types, then by themes, then by parents
                     this._collections = [];
-                    let collectionFeatures: Array<ThemeCollections> = [];
-                    let collectionCoverages: Array<ThemeCollections> = [];
+                    let collectionFeatures: ThemeCollections[] = [];
+                    let collectionCoverages: ThemeCollections[] = [];
                     colls.forEach((collection: PyGeoAPICollectionsCollectionResponsePayload) => {
                         // Depending on the type
                         let themeColls: ThemeCollections[] | undefined;
@@ -432,38 +442,68 @@ export default class CZSEngine {
                             if (!thmColl) {
                                 thmColl = new ThemeCollections({
                                     id: collection.theme,
-                                    name: collection.theme
+                                    title: collection.theme
                                 }, []);
                                 themeColls.push(thmColl);
                             }
 
-                            // Add the collection to the ThemeCollections
-                            thmColl.collections.push(collection);
+                            // Find the parent
+                            let parentColl = thmColl.parents?.find((parCol: ParentCollections) => {
+                                return parCol.parent.id == collection.parent;
+                            });
+
+                            // If not found
+                            if (!parentColl) {
+                                parentColl = new ParentCollections(thmColl.theme, {
+                                    id: collection.parent,
+                                    title: collection.parent_title
+                                }, []);
+                                thmColl.parents.push(parentColl);
+                            }
+
+                            // Add the collection to the ParentCollections
+                            parentColl.collections.push(collection);
+
+                            // Add the collection in the overall list
                             this._collections.push(collection);
                         }
                     });
 
                     // Reorder the themes by alphabetical order
                     collectionFeatures.sort((t1: ThemeCollections, t2: ThemeCollections): number => {
-                        return CZSUtils.sortAlphabetically(t1.theme.name, t2.theme.name);
+                        return CZSUtils.sortAlphabetically(t1.theme.title, t2.theme.title);
                     });
 
                     // Reorder the themes by alphabetical order
                     collectionCoverages.sort((t1: ThemeCollections, t2: ThemeCollections): number => {
-                        return CZSUtils.sortAlphabetically(t1.theme.name, t2.theme.name);
+                        return CZSUtils.sortAlphabetically(t1.theme.title, t2.theme.title);
                     });
 
-                    // Reorder each collection within each theme
+                    // Reorder the parents by alphabetical order
                     collectionFeatures.forEach((t: ThemeCollections) => {
-                        t.collections.sort((c1: PyGeoAPICollectionsCollectionResponsePayload, c2: PyGeoAPICollectionsCollectionResponsePayload): number => {
-                            return CZSUtils.sortAlphabetically(c1.title, c2.title);
+                        t.parents.sort((p1: ParentCollections, p2: ParentCollections): number => {
+                            return CZSUtils.sortAlphabetically(p1.parent.title, p2.parent.title);
+                        });
+
+                        // Reorder the collections by alphabetical order
+                        t.parents.forEach((t: ParentCollections) => {
+                            t.collections.sort((c1: PyGeoAPICollectionsCollectionResponsePayload, c2: PyGeoAPICollectionsCollectionResponsePayload): number => {
+                                return CZSUtils.sortAlphabetically(c1.title, c2.title);
+                            });
                         });
                     });
 
                     // Reorder each collection within each theme
                     collectionCoverages.forEach((t: ThemeCollections) => {
-                        t.collections.sort((c1: PyGeoAPICollectionsCollectionResponsePayload, c2: PyGeoAPICollectionsCollectionResponsePayload): number => {
-                            return CZSUtils.sortAlphabetically(c1.title, c2.title);
+                        t.parents.sort((p1: ParentCollections, p2: ParentCollections): number => {
+                            return CZSUtils.sortAlphabetically(p1.parent.title, p2.parent.title);
+                        });
+
+                        // Reorder the collections by alphabetical order
+                        t.parents.forEach((t: ParentCollections) => {
+                            t.collections.sort((c1: PyGeoAPICollectionsCollectionResponsePayload, c2: PyGeoAPICollectionsCollectionResponsePayload): number => {
+                                return CZSUtils.sortAlphabetically(c1.title, c2.title);
+                            });
                         });
                     });
 
@@ -505,11 +545,8 @@ export default class CZSEngine {
             // Emit
             this.onUpdateLayersStarted();
 
-            // Get the checked collections
-            const checkedColls: string[] = this.getCheckedCollections();
-
             // For each checked collections
-            for await (const coll_id of checkedColls) {
+            for await (const coll_id of this.getCheckedCollections()) {
                 // Find the collection information for that collection id
                 let coll_info = this.findCollectionFromID(coll_id);
 
@@ -595,6 +632,12 @@ export default class CZSEngine {
 
             // Add fingerprint
             this.addFingerprintCollection(coll_info);
+
+            // If there was a geometry
+            if (geom) {
+                // Emit
+                this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT, handlerName: this._mapID, collection: coll_info });
+            }
             return true;
         }
     }
@@ -718,9 +761,6 @@ export default class CZSEngine {
 
         // Load the features in the group
         this.loadFeaturesInGroup([coll_info.wkt], CZSEngine.COLLECTION_FOOTPRINT_CRS, "red", "red");
-
-        // Emit
-        this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT, handlerName: this._mapID, collection: coll_info });
     }
 
     removeCollection = (collection_id: string) => {
@@ -761,6 +801,7 @@ export default class CZSEngine {
 
             else if (geometry.getType() == "Point") {
                 // Add geometry to feature collection
+                debugger;
                 this._map.layer.vector.addMarkerIcon(geometry.getCoordinates(), {
                     projection: crs,
                     style: {
@@ -769,7 +810,7 @@ export default class CZSEngine {
                         scale: 0.1,
                         anchorXUnits: 'fraction',
                         anchorYUnits: 'pixels',
-                        src: './img/Marker_green.png',
+                        src: ImageMarkerGreen,
                     }
                 });
             }
@@ -786,7 +827,7 @@ export default class CZSEngine {
                             scale: 0.1,
                             anchorXUnits: 'fraction',
                             anchorYUnits: 'pixels',
-                            src: './img/Marker_green.png',
+                            src: ImageMarkerGreen,
                         }
                     });
                 });

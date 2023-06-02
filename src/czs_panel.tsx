@@ -1,11 +1,18 @@
 import {
     CZS_EVENT_NAMES,
     ThemeCollections,
+    ParentCollections,
     PyGeoAPICollectionsCollectionResponsePayload
 } from './czs_types';
 import CZSUtils from './czs_utils';
 import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
+import ImageMore from './assets/images/more.png';
+import ImageZoomIn from './assets/images/zoom_in.png';
+import ImageCapabilities from './assets/images/stars.png';
+import ImageMetadata from './assets/images/metadata.png';
+import ImageArrowUp from './assets/images/arrow_up.png';
+import ImageArrowDown from './assets/images/arrow_down.png';
 
 
 interface CZSPanelProps {
@@ -17,7 +24,7 @@ interface CZSPanelProps {
     handleViewCapabilitiesCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
     handleHigher: (coll_type: string, coll_id: string) => void;
     handleLower: (coll_type: string, coll_id: string) => void;
-    handleCollectionCheckedChanged: (list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) => void;
+    handleCollectionCheckedChanged: (value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]) => void;
 }
 
 /**
@@ -42,12 +49,12 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     // States
     const [collectionsFeatures, _setCollectionsFeatures] = useState([]);
     const [collectionsCoverages, _setCollectionsCoverages] = useState([]);
-    const [checkedCollections, _setCheckedCollections] = useState({});
+    const [checkedCollections, _setCheckedCollections] = useState([]);
+    const [viewedCollections, _setViewedCollections] = useState({});
     const [clearButtonState, _setClearButtonState] = useState({});
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     const [contextMenuCollection, setContextMenuCollection] = useState(null);
-    const [hasViewedCollections, _setHasViewedCollections] = useState(false);
     const [email, _setEmail] = useState("alexandre.roy@nrcan-rncan.gc.ca");
     const [isLoading, _setIsLoading] = useState(false);
     const [isLoadingFeatures, _setIsLoadingFeatures] = useState(false);
@@ -127,7 +134,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             (payload: any) => {
                 // Is loading
                 _setIsLoadingFeatures(true);
-                _setCheckedCollections({ ...payload.checkedCollections });
+                _setCheckedCollections(payload.checkedCollections);
             },
             MAP_ID
         );
@@ -138,8 +145,8 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             (payload: any) => {
                 // Is loading
                 _setIsLoadingFeatures(false);
-                // If extraction is possible
-                _setHasViewedCollections(!!Object.keys(payload.viewedCollections).length)
+                // Set viewed collections
+                _setViewedCollections({ ...payload.viewedCollections });
             },
             MAP_ID
         );
@@ -174,14 +181,24 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             MAP_ID
         );
 
+        // Listen to the engine event when some collections couldn't be shown on map, only their footprints
+        api.event.on(
+            CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM,
+            (payload: any) => {
+                // Show error
+                api.utilities.showWarning(MAP_ID, t('czs.warning_extraction_area_missing'));
+            },
+            MAP_ID
+        );
+
         // Listen to the engine event when finished updating the collections list and their map visibility
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED,
             (payload: any) => {
                 // Is loading
                 _setIsLoadingFeatures(false);
-                // If extraction is possible
-                _setHasViewedCollections(!!Object.keys(payload.collections).length);
+                // Set viewed collections
+                _setViewedCollections({ ...payload.viewedCollections });
             },
             MAP_ID
         );
@@ -303,8 +320,8 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         props.handleLower?.(coll_type, coll_id);
     }
 
-    function handleCollectionCheckedChanged(list_key: string, themeColl: ThemeCollections, value: string, checked: boolean, checkedColls: Array<string>) {
-        props.handleCollectionCheckedChanged?.(list_key, themeColl, value, checked, checkedColls);
+    function handleCollectionCheckedChanged(value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]) {
+        props.handleCollectionCheckedChanged?.(value, checked, parentColl, checkedColls);
     }
 
     function handleEmailChange(): void {
@@ -317,35 +334,55 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         setAnchorEl(null);
     }
 
-    function renderContentThemes(list_key: string, thmColls: ThemeCollections[]) {
+    function renderContentThemes(thmColls: ThemeCollections[]) {
         // For each theme
-        //console.log("renderContentThemes");
         return <Accordion
             className="accordion-theme"
-            items={Object.values(thmColls).map((thmColl: ThemeCollections) => (
-                {
-                    title: thmColl.theme.name + " (" + thmColl.collections.length + ")",
-                    content: renderContentColls(list_key, thmColl)
+            items={Object.values(thmColls).map((thmColl: ThemeCollections) => {
+                // Get the parents that are checked on under this theme
+                let checkedParents: ParentCollections[] = getParentsHasChecked(thmColl);
+
+                // Render
+                return {
+                    title: thmColl.theme.title + " (" + thmColl.parents.length + ")" + ((checkedParents.length > 0) ? " *" : ""),
+                    content: renderContentParents(thmColl.parents, checkedParents)
                 }
-            ))}
+            })}
         ></Accordion>;
     }
 
-    function renderContentColls(list_key: string, thmColl: ThemeCollections) {
+    function renderContentParents(parColls: ParentCollections[], checkedParents: ParentCollections[]) {
         // If a regular feature/coverage collection
-        if (thmColl.collections && thmColl.collections.length > 0) {
-            let key = list_key + "_" + thmColl.theme.id;
+        if (parColls && parColls.length > 0) {
+            return <Accordion
+            className="accordion-parent"
+            items={Object.values(parColls).map((parColl: ParentCollections) => (
+                {
+                    title: parColl.parent.title + " (" + parColl.collections.length + ")" + ((checkedParents.filter((x: ParentCollections) => { return x.parent.id == parColl.parent.id; }).length > 0) ? " *" : ""),
+                    content: renderContentColls(parColl)
+                }
+            ))}
+        ></Accordion>;
+        }
+
+        else
+            return null;
+    }
+
+    function renderContentColls(parColl: ParentCollections) {
+        // If a regular feature/coverage collection
+        if (parColl.collections && parColl.collections.length > 0) {
             return <CheckboxListAlex
                 multiselect={true}
-                listItems={Object.values(thmColl.collections).map((coll: PyGeoAPICollectionsCollectionResponsePayload) => {
+                listItems={Object.values(parColl.collections).map((coll: PyGeoAPICollectionsCollectionResponsePayload) => {
                     return {
                         display: coll.title,
                         value: coll.id,
-                        content: renderContentLayer(key, coll)
+                        content: renderContentLayer(coll)
                     };
                 })}
-                checkedValues={checkedCollections[key] || []}
-                checkedCallback={(value: string, checked: boolean, allChecked: Array<string>) => handleCollectionCheckedChanged(list_key, thmColl, value, checked, allChecked)}
+                checkedValues={checkedCollections || []}
+                checkedCallback={(value: string, checked: boolean, allChecked: string[]) => handleCollectionCheckedChanged(value, checked, parColl, allChecked)}
             ></CheckboxListAlex>;
         }
 
@@ -353,25 +390,46 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             return null;
     }
 
-    function renderContentLayer(key: string, coll: PyGeoAPICollectionsCollectionResponsePayload) {
+    function getParentsHasChecked(themeColl: ThemeCollections): ParentCollections[] {
+        // If none checked
+        if (!checkedCollections || checkedCollections.length == 0) return [];
+
+        // For each parent collection in the theme
+        let parents: ParentCollections[] = [];
+        themeColl.parents.forEach((par: ParentCollections) => {
+            let lst = par.collections.filter((col: PyGeoAPICollectionsCollectionResponsePayload) => {
+                return checkedCollections.includes(col.id);
+            });
+
+            // If any collection is checked under this parent
+            if (lst && lst.length > 0) {
+                parents.push(par);
+            }
+        });
+
+        // Return content
+        return parents;
+    }
+
+    function renderContentLayer(coll: PyGeoAPICollectionsCollectionResponsePayload) {
 
         let menu_more: JSX.Element = <span></span>;
         menu_more = <div className="layer-options layer-option">
             <ListItem button title={ t('czs.layer_options') } onClick={ (e: any) => { handleMenuMore(e, coll); } }>
                 <ListItemIcon>
-                    <img src='./img/more.png'></img>
+                    <img src={ ImageMore }></img>
                 </ListItemIcon>
             </ListItem>
         </div>;
 
         let orders: JSX.Element = <span></span>;
-        if (checkedCollections[key] && checkedCollections[key].includes(coll.id)) {
+        if (coll && viewedCollections[coll.id]) {
             orders = <div className={`layer-order-layers layer-option ${isOrderLoading.includes(coll.id) ? "loading" : ""}`}>
                         <div onClick={ (e) => { handleHigher(coll.itemType, coll.id); } } title={ t('czs.layer_bring_to_front') }>
-                            <img src='./img/arrow_up.png'></img>
+                            <img src={ ImageArrowUp }></img>
                         </div>
                         <div onClick={ (e) => { handleLower(coll.itemType, coll.id); } } title={ t('czs.layer_send_to_back') }>
-                            <img src='./img/arrow_down.png'></img>
+                        <img src={ ImageArrowDown }></img>
                         </div>
                     </div>;
         }
@@ -379,7 +437,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     }
 
     function renderMenuOptions() {
-        //console.log("renderMenuOptions", contextMenu);
+        //console.log("renderMenuOptions");
 
         // Read info
         let link = null;
@@ -390,7 +448,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         if (link) {
             metadata_node = <MenuItem className="layer-metadata" onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleViewMetadataCollection()}>
                 <ListItemIcon>
-                    <img src='./img/metadata.png'></img>
+                    <img src={ ImageMetadata }></img>
                 </ListItemIcon>
                 <ListItemText>{ t('czs.view_metadata') }</ListItemText>
             </MenuItem>
@@ -399,13 +457,13 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         return <Menu className="czs_menu_options" anchorEl={anchorEl} open={open} onClose={handleCloseContextMenu}>
             <MenuItem onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleZoomToCollection()}>
                 <ListItemIcon>
-                    <img src='./img/zoom_in.png'></img>
+                    <img src={ ImageZoomIn }></img>
                 </ListItemIcon>
                 <ListItemText>{ t('czs.zoom_to') }</ListItemText>
             </MenuItem>
             <MenuItem onClick={(e: React.MouseEventHandler<HTMLButtonElement>) => handleViewCapabilitiesCollection()}>
                 <ListItemIcon>
-                    <img src='./img/stars.png'></img>
+                    <img src={ ImageCapabilities }></img>
                 </ListItemIcon>
                 <ListItemText>{ t('czs.view_capabilities') }</ListItemText>
             </MenuItem>
@@ -444,7 +502,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                     items={[
                         {
                             title: t('czs.list_feature_colls'),
-                            content: renderContentThemes("features", collectionsFeatures)
+                            content: renderContentThemes(collectionsFeatures)
                         }
                     ]}
                 ></Accordion>
@@ -452,7 +510,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                     items={[
                         {
                             title: t('czs.list_coverage_colls'),
-                            content: renderContentThemes("coverages", collectionsCoverages)
+                            content: renderContentThemes(collectionsCoverages)
                         }
                     ]}
                 ></Accordion>
@@ -472,7 +530,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                 type="text"
                 onClick={ handleExtractFeatures }
                 size="small"
-                disabled={ !(hasViewedCollections && email && !isExtracting) }
+                disabled={ !(!!Object.keys(viewedCollections).length && email && !isExtracting) }
             >{ t('czs.extract_features') }</Button>
 
             <Accordion

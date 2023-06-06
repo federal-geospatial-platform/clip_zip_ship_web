@@ -191,8 +191,7 @@ export default class CZSEngine {
         //console.log("handleDrawEndAsync", e);
         let geom = e.feature.getGeometry();
 
-        // Stop the interaction
-        // TODO: Refactor: Delay the stoppage of the interaction, because we're handling it on the stop event of said interaction itself (prevents a double-click event)
+        // Stop the interaction (doing it in a delay prevents a double-click event)
         setTimeout(() => {
             // Stop drawing interaction
             this.onStopDrawing();

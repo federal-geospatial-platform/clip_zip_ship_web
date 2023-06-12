@@ -601,15 +601,9 @@ export default class CZSEngine {
         return this._cgpvapi.geoUtilities.getArea(geom, {projection: this._map.getView().getProjection().getCode()}) / 1000000
     }
 
-    getFakeAreaColl = (collection_id: string) => {
-        //if (collection_id == "major_projects___major_projects_inventory_point") return 1000000;
-        //if (collection_id == "major_projects___major_projects_inventory_line") return 250000;
-        return 1000;
-    }
-
     addCollectionAsync = async (coll_info: PyGeoAPICollectionsCollectionResponsePayload, geom?: any): Promise<boolean> => {
         // Check if extraction area is big enough
-        if (geom && this.getAreaInKm2(geom) <= this.getFakeAreaColl(coll_info.id)) {
+        if (geom && this.getAreaInKm2(geom) <= coll_info.max_area) {
             // Depending on the collection type
             if (coll_info.itemType == "feature") {
                 // Flush the geometry group
@@ -798,9 +792,16 @@ export default class CZSEngine {
                 this._map.layer.vector.addPolyline(geometry.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 0.5, strokeWidth: 1 } });
             }
 
+            else if (geometry.getType() == "MultiLineString") {
+                // For each line
+                geometry.getLineStrings().forEach((line: any) => {
+                    // Add geometry to feature collection
+                    this._map.layer.vector.addPolyline(line.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
+                });
+            }
+
             else if (geometry.getType() == "Point") {
                 // Add geometry to feature collection
-                debugger;
                 this._map.layer.vector.addMarkerIcon(geometry.getCoordinates(), {
                     projection: crs,
                     style: {
@@ -863,6 +864,13 @@ export default class CZSEngine {
                     // For each line segment
                     rec.geometry_clipped.coordinates.forEach((coords: number[]) => {
                         this._map.layer.vector.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5 } });
+                    });
+                }
+
+                else if (rec.geometry_clipped.type == "MultiLineString") {
+                    // For each line
+                    rec.geometry_clipped.coordinates.forEach((coords: number[][]) => {
+                        this._map.layer.vector.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
                     });
                 }
 

@@ -80,7 +80,7 @@ export default class CZSServices {
                     }
 
                     else if (response.status == 413) {
-                        reject("Your extraction area is too big. Please use an extraction area less than 1,000 square kilometers.");
+                        reject("Your extraction area is too big.");
                     }
 
                     else {
@@ -131,7 +131,7 @@ export default class CZSServices {
                     }
 
                     else if (response.status == 413) {
-                        reject("Your extraction area is too big. Please use an extraction area less than 1,000 square kilometers.");
+                        reject("Your extraction area is too big.");
                     }
 
                     else {

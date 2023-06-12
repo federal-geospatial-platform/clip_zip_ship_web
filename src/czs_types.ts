@@ -47,6 +47,7 @@ export type PyGeoAPICollectionsCollectionResponsePayload = {
     org_schema: string;
     crs: string[];
     wkt: string;
+    max_area: number;
 };
 
 export type PyGeoAPICollectionsCollectionLinkResponsePayload = {

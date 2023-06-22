@@ -20,4 +20,10 @@ export default class CZSUtils {
         return 0;
     }
 
+    static delay = async (time: number) => {
+        return new Promise(res => {
+            setTimeout(res, time)
+        });
+    }
+
 }

@@ -65,7 +65,7 @@ rush build:core
 
 This will create a `dist` folder with the necessary files for the deployment.
 
-### Go to the directory of the cloned GeoView repo
+### Go to the directory of the cloned Clip Zip Shipt plugin repo
 
 ```
 cd clip_zip_ship_web

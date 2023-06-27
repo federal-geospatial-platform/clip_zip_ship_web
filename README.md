@@ -96,4 +96,4 @@ powershell -Command "(gc index.html) -replace 'http://localhost:8081/cgpv-main.j
 powershell -Command "(gc index-fr.html) -replace 'http://localhost:8081/cgpv-main.js', 'cgpv-main.js' | Out-File -encoding UTF8 index-fr.html"
 ```
 
-Use the `DocikerFile` to create the Docker container with the entire `C:\{PATH_OF_DEPLOYMENT_FOLDER}` which is expected to be named `dist` in the `DocikerFile`.
+Use the `DockerFile` to create the Docker container with the entire `C:\{PATH_OF_DEPLOYMENT_FOLDER}` which is expected to be named `dist` in the `DockerFile`.

@@ -7,7 +7,7 @@ import {
 
 export default class CZSServices {
 
-    static getCollectionsPOSTAsync = async (lang: string, geom_wkt: string, crs: number) => {
+    static getCollectionsPOSTAsync = async (lang: string, geom_wkt: string, crs: number): Promise<PyGeoAPICollectionsCollectionResponsePayload[]> => {
         let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload[]>((resolve, reject) => {
             fetch(PYGEOAPI_URL_ENDPOINT + "&lang=" + lang, {
                 headers: {
@@ -98,7 +98,7 @@ export default class CZSServices {
         return promise;
     };
 
-    static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number) => {
+    static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number): Promise<PyGeoAPIRecordsResponsePayload> => {
         let url = PYGEOAPI_URL_FEATURES_EXTRACT.replace("{collectionId}", collection.id);
         if (geom_wkt)
             url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=true";
@@ -142,6 +142,41 @@ export default class CZSServices {
             }).catch((error) => {
                 console.log(error);
                 reject("Failed to communicate with the server to fetch features for collection: " + collection.title);
+            });
+        });
+
+        // Return the promise
+        return promise;
+    };
+
+    static getCollectionWKTAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload): Promise<PyGeoAPICollectionsCollectionResponsePayload> => {
+        let url = PYGEOAPI_URL_COLLECTION_ID.replace("{collectionId}", collection.id);
+        let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload>((resolve, reject) => {
+            fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "GET"
+            }).then((response) => {
+                // Only process valid response
+                if (response.status === 200) {
+                    response.json().then((data: PyGeoAPICollectionsCollectionResponsePayload) => {
+                        // Resolve
+                        resolve(data);
+                    }).catch((err) => {
+                        console.log(err);
+                        reject("Invalid response returned by the server.");
+                    });
+                }
+
+                else {
+                    console.log("Invalid request for wkt: " + response.status);
+                        reject("The server couldn't find the WKT for the collection.");
+                }
+            }).catch((error) => {
+                console.log(error);
+                reject("Failed to communicate with the server to get WKT for the collection: " + collection.title);
             });
         });
 

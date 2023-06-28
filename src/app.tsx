@@ -36,7 +36,7 @@ const App = (): JSX.Element => {
 
     async function handleZoomToCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
         // Zoom to collection
-        await czs_engine.zoomToCollection(parseInt(collection?.crs[0]), collection.wkt);
+        await czs_engine.zoomToCollection(collection);
     }
 
     async function handleViewCapabilitiesCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {

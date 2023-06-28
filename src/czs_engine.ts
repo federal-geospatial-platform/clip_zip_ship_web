@@ -305,9 +305,12 @@ export default class CZSEngine {
         }
     }
 
-    zoomToCollection = async (crs: number, coll_wkt: string) => {
+    zoomToCollection = async (collection: PyGeoAPICollectionsCollectionResponsePayload) => {
+        // Get the wkt for the collection
+        let coll: PyGeoAPICollectionsCollectionResponsePayload = await CZSServices.getCollectionWKTAsync(collection);
+
         // Convert wkt to geometry
-        const geom = this._cgpvapi.geoUtilities.wktToGeometry(coll_wkt);
+        const geom = this._cgpvapi.geoUtilities.wktToGeometry(coll.wkt);
 
         // Reproject in current map projection
         geom.transform(
@@ -545,14 +548,16 @@ export default class CZSEngine {
             this.onUpdateLayersStarted();
 
             // For each checked collections
-            for await (const coll_id of this.getCheckedCollections()) {
+            let promises = [];
+            for (const coll_id of this.getCheckedCollections()) {
                 // Find the collection information for that collection id
                 let coll_info = this.findCollectionFromID(coll_id);
 
                 // If found
                 if (coll_info) {
                     // Add collection layer
-                    await this.addCollectionAsync(coll_info, geom);
+                    let p = this.addCollectionAsync(coll_info, geom);
+                    promises.push(p);
                 }
 
                 else {
@@ -562,6 +567,9 @@ export default class CZSEngine {
                     }
                 }
             }
+
+            // Wait for all promises to finish
+            await Promise.all(promises);
 
             // Done
             return true;
@@ -602,6 +610,8 @@ export default class CZSEngine {
     }
 
     addCollectionAsync = async (coll_info: PyGeoAPICollectionsCollectionResponsePayload, geom?: any): Promise<boolean> => {
+        //console.log("addCollectionAsync : " + coll_info.id)
+
         // Check if extraction area is big enough
         if (geom && this.getAreaInKm2(geom) <= coll_info.max_area) {
             // Depending on the collection type
@@ -610,12 +620,12 @@ export default class CZSEngine {
                 this.removeCollection(coll_info.id);
 
                 // Add vector collection
-                return await this.addCollectionVectorAsync(coll_info, geom);
+                this.addCollectionVectorAsync(coll_info, geom);
             }
 
             else {
                 // Add raster collection
-                return await this.addCollectionRasterAsync(coll_info, geom);
+                this.addCollectionRasterAsync(coll_info, geom);
             }
         }
 
@@ -624,15 +634,15 @@ export default class CZSEngine {
             this.removeCollection(coll_info.id);
 
             // Add fingerprint
-            this.addFingerprintCollection(coll_info);
+            this.addFingerprintCollectionAsync(coll_info);
 
             // If there was a geometry
             if (geom) {
                 // Emit
                 this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT, handlerName: this._mapID, collection: coll_info });
             }
-            return true;
         }
+        return true;
     }
 
     addCollectionVectorAsync = async (coll_info: PyGeoAPICollectionsCollectionResponsePayload, geom?: any): Promise<boolean> => {
@@ -742,7 +752,10 @@ export default class CZSEngine {
         return true;
     }
 
-    addFingerprintCollection = (coll_info: PyGeoAPICollectionsCollectionResponsePayload) => {
+    addFingerprintCollectionAsync = async (coll_info: PyGeoAPICollectionsCollectionResponsePayload) => {
+        // Get the wkt for the collection
+        let coll: PyGeoAPICollectionsCollectionResponsePayload = await CZSServices.getCollectionWKTAsync(coll_info);
+
         // Create geometry group which will handle the records results
         const geomGrpRes = this._map.layer.vector.createGeometryGroup(coll_info.id);
 
@@ -753,7 +766,7 @@ export default class CZSEngine {
         this._map.layer.vector.setActiveGeometryGroup(coll_info.id);
 
         // Load the features in the group
-        this.loadFeaturesInGroup([coll_info.wkt], CZSEngine.COLLECTION_FOOTPRINT_CRS, "red", "red");
+        this.loadFeaturesInGroup([coll.wkt], CZSEngine.COLLECTION_FOOTPRINT_CRS, "red", "red");
     }
 
     removeCollection = (collection_id: string) => {

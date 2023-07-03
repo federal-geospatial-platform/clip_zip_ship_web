@@ -619,8 +619,8 @@ export default class CZSEngine {
                 // Flush the geometry group
                 this.removeCollection(coll_info.id);
 
-                // Add vector collection
-                this.addCollectionVectorAsync(coll_info, geom);
+                // Add vector collection and wait for its addition to complete
+                await this.addCollectionVectorAsync(coll_info, geom);
             }
 
             else {

@@ -71,6 +71,25 @@ export type PyGeoAPIRecordsDataResponsePayload = {
     type: string;
 };
 
+export type PyGeoAPIJobIDResponsePayload = {
+    job_id: string;
+}
+
+export type PyGeoAPIJobStatusResponsePayload = {
+    processID: string;
+    jobID: string;
+    status: string;
+    message: string;
+    progress: number;
+    parameters: any;
+    job_start_datetime: string;
+    job_end_datetime: string;
+}
+
+export type PyGeoAPIJobResultResponsePayload = {
+    extract_url: string;
+}
+
 /** Valid keys for the CLIP ZIP SHIP category */
 export type CZSEngineEventKey =
     | 'ENGINE_LOAD_COLLECTIONS_STARTED'
@@ -86,8 +105,6 @@ export type CZSEngineEventKey =
     | 'ENGINE_COLLECTION_CHANGED_STARTED'
     | 'ENGINE_COLLECTION_CHANGED_ENDED'
     | 'ENGINE_EXTRACT_STARTED'
-    | 'ENGINE_EXTRACT_ENDED'
-    | 'ENGINE_EXTRACT_COMPLETED'
     | 'ENGINE_LAYER_ORDERED'
     | 'ENGINE_ERROR'
     | 'ENGINE_ERROR_ZOOMING_OUTSIDE'
@@ -112,8 +129,6 @@ export type CZSEngineEventStringId =
     | 'czs/engine/ENGINE-COLLECTION_CHANGED_STARTED'
     | 'czs/engine/ENGINE-COLLECTION_CHANGED_ENDED'
     | 'czs/engine/ENGINE-EXTRACT_STARTED'
-    | 'czs/engine/ENGINE-EXTRACT_ENDED'
-    | 'czs/engine/ENGINE-EXTRACT_COMPLETED'
     | 'czs/engine/ENGINE-LAYER_ORDERED'
     | 'czs/engine/ENGINE-ERROR'
     | 'czs/engine/ENGINE_ERROR_ZOOMING_OUTSIDE'
@@ -190,12 +205,12 @@ export const CZS_EVENT_NAMES: Record<CZSEngineEventKey, CZSEngineEventStringId> 
     /**
      * Event is triggered when the engine has finished extracting data for the viewed (not the checked) collections
      */
-    ENGINE_EXTRACT_ENDED: 'czs/engine/ENGINE-EXTRACT_ENDED',
+    //ENGINE_EXTRACT_ENDED: 'czs/engine/ENGINE-EXTRACT_ENDED',
 
     /**
      * Event is triggered when the engine has completed extracting data for the viewed (not the checked) collections
      */
-    ENGINE_EXTRACT_COMPLETED: 'czs/engine/ENGINE-EXTRACT_COMPLETED',
+    //ENGINE_EXTRACT_COMPLETED: 'czs/engine/ENGINE-EXTRACT_COMPLETED',
 
     /**
      * Event is triggered when the engine is re-ordering the layers

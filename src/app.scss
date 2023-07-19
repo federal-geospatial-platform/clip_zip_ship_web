@@ -1,4 +1,4 @@
-.czs_panel {
+.czs-panel {
   position: relative;
 }
 
@@ -27,8 +27,8 @@
   background-color: #005fcb52;
 }
 
-.czs_panel .MuiListItem-root,
-.czs_panel .MuiListItem-root:hover,
+.czs-panel .MuiListItem-root,
+.czs-panel .MuiListItem-root:hover,
 .MuiMenuItem-root.MuiMenuItem-gutters {
   color: black;
 }
@@ -90,6 +90,64 @@
 
 .need-help {
   background-color: #e4b152;
+}
+
+.czs-jobs {
+  position: relative;
+  margin: 20px 0px;
+}
+
+.czs-jobs a {
+  color: inherit;
+  font-size: 1rem;
+}
+
+.czs-jobs table {
+  width: 100%;
+}
+
+.czs-jobs-cell-info a {
+  text-decoration: none;
+}
+.czs-jobs-cell-info a:hover {
+  text-decoration: underline;
+}
+
+.czs-jobs-cell-progress {
+  width: 100px;
+}
+
+.czs-jobs-cell-spin {
+  width: 20px;
+  text-align: right;
+}
+.czs-jobs-cell-spin img {
+  vertical-align: middle;
+}
+
+.czs-jobs .loading-spinner {
+  position: relative;
+  right: 0px;
+  background-color: transparent;
+}
+
+.czs-jobs .loading-spinner .MuiCircularProgress-root  {
+  position: relative;
+  height: 20px !important;
+  width: 20px !important;
+}
+
+.czs-jobs .job-dismissed:hover {
+  text-decoration: none;
+}
+
+.czs-email input {
+  padding: 10px 10px;
+  font-size: 1rem;
+}
+
+.btn-extract {
+  margin: 20px 0px;
 }
 
 .help-text {

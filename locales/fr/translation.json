@@ -15,6 +15,7 @@
     "layer_send_to_back": "Placer en arrière",
     "msg_pre_release": "Ceci est une version pre-alpha. Seulement pour fins d'expérimentation.",
     "success_extraction_completed": "Extraction complété, regardez vos courriels!",
+    "success_extraction_failed": "Extraction échouée",
     "warning_extraction_area_too_big": "Zone d'extraction trop grande pour la collection",
     "warning_extraction_area_missing": "Zone d'extraction manquante, seulement les empreintes des données sont affichés",
     "error_some_elements_outside": "Certains éléments sont en dehors de l'étendu cartographique.",

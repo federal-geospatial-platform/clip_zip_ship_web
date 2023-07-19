@@ -26,7 +26,8 @@ const map_config = {
 		'listOfGeoviewLayerConfig': []
 	},
 	'theme': 'dark',
-	'components': ['app-bar', 'nav-bar', 'north-arrow', 'footer-bar'],
+	'components': ['north-arrow'],
+	'appBar': [],
 	'corePackages': [], // 'layers-panel'
 	'suportedLanguages': ['en', 'fr']
 };

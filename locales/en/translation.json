@@ -15,6 +15,7 @@
     "layer_send_to_back": "Send To Back",
     "msg_pre_release": "This is a pre-alpha release. Only for experimentation purposes.",
     "success_extraction_completed": "Extraction completed, check your emails!",
+    "success_extraction_failed": "Extraction failed",
     "warning_extraction_area_too_big": "Extraction area too big for collection",
     "warning_extraction_area_missing": "Missing an extraction area, only showing the data footprints",
     "error_some_elements_outside": "Some elements were outside map extent limits.",

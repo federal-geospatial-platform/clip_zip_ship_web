@@ -5,6 +5,7 @@ import {
     PyGeoAPICollectionsCollectionResponsePayload
 } from './czs_types';
 import CZSUtils from './czs_utils';
+import CZSJobs from './czs_job';
 import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
 import ImageMore from './assets/images/more.png';
@@ -40,7 +41,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     const { api, react, ui, useTranslation } = cgpv;
     const { createElement: h, useState, useEffect } = react;
     //const { makeStyles, useTheme } = ui;
-    const { Button, CircularProgress, Accordion, CheckboxListAlex, TextField, Menu, MenuItem, ListItem, ListItemText, ListItemIcon } = ui.elements;
+    const { Button, CircularProgress, Accordion, CheckboxListEnhanced, TextField, Menu, MenuItem, ListItem, ListItemText, ListItemIcon } = ui.elements;
     const MAP_ID = "mapCZS";
 
     // Translation
@@ -203,38 +204,6 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             MAP_ID
         );
 
-        // Listen to the engine extraction started event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_EXTRACT_STARTED,
-            (payload: any) => {
-                // Is loading
-                _setIsExtracting(true);
-                _setIsLoadingFeatures(true);
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine extraction ended event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_EXTRACT_ENDED,
-            (payload: any) => {
-                // Is done
-                _setIsExtracting(false);
-                _setIsLoadingFeatures(false);
-            },
-            MAP_ID
-        );
-
-        // Listen to the engine extraction completed event
-        api.event.on(
-            CZS_EVENT_NAMES.ENGINE_EXTRACT_COMPLETED,
-            (payload: any) => {
-                // Show message to user
-                api.utilities.showSuccess(MAP_ID, t('czs.success_extraction_completed'));
-            },
-            MAP_ID
-        );
-
         // Listen to the engine error event
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_ERROR,
@@ -372,7 +341,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     function renderContentColls(parColl: ParentCollections) {
         // If a regular feature/coverage collection
         if (parColl.collections && parColl.collections.length > 0) {
-            return <CheckboxListAlex
+            return <CheckboxListEnhanced
                 multiselect={true}
                 listItems={Object.values(parColl.collections).map((coll: PyGeoAPICollectionsCollectionResponsePayload) => {
                     return {
@@ -383,7 +352,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                 })}
                 checkedValues={checkedCollections || []}
                 checkedCallback={(value: string, checked: boolean, allChecked: string[]) => handleCollectionCheckedChanged(value, checked, parColl, allChecked)}
-            ></CheckboxListAlex>;
+            ></CheckboxListEnhanced>;
         }
 
         else
@@ -471,9 +440,9 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         </Menu>;
     }
 
-    // Return coordinates
+    // Return Panel UI
     return (
-        <div className="czs_panel">
+        <div className="czs-panel">
             <div>
                 <Button
                     type="text"
@@ -518,9 +487,10 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
 
             <TextField
                 id="czs_email"
+                className="czs-email"
                 type="email"
                 placeholder={t('czs.enter_email')}
-                style={{ marginTop: 30, width: '100%' }}
+                style={{ marginTop: 20, width: '100%' }}
                 onChange={ handleEmailChange }
                 value={email}
             ></TextField>
@@ -532,6 +502,8 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                 size="small"
                 disabled={ !(!!Object.keys(viewedCollections).length && email && !isExtracting) }
             >{ t('czs.extract_features') }</Button>
+
+            <CZSJobs></CZSJobs>
 
             <Accordion
                 className="need-help"

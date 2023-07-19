@@ -4,6 +4,7 @@ import {
     ThemeCollections,
     PyGeoAPICollectionsCollectionResponsePayload,
     PyGeoAPIRecordsResponsePayload,
+    PyGeoAPIJobIDResponsePayload,
     ParentCollections
 } from './czs_types';
 import CZSUtils from './czs_utils';
@@ -280,15 +281,12 @@ export default class CZSEngine {
 
     extractFeaturesAsync = async (email: string): Promise<any> => {
         try {
-            // Start
-            this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_STARTED, handlerName: this._mapID });
-
             // Proceed
-            let res = await CZSServices.extractFeaturesAsync(Object.keys(this._viewedCollections), email, this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection)
+            let res: PyGeoAPIJobIDResponsePayload = await CZSServices.extractFeaturesAsync(Object.keys(this._viewedCollections), email, this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection)
+            console.log("JOB RESULT", res);
 
-            // Completed
-            this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_COMPLETED, handlerName: this._mapID, result: res });
-            console.log("EXTRACTION RESULT", res);
+            // Job started
+            this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_STARTED, handlerName: this._mapID, ...res });
 
             // Return result
             return res;
@@ -297,11 +295,6 @@ export default class CZSEngine {
         catch (err) {
             // Handle error
             this.onErrorExtracting(err);
-        }
-
-        finally {
-            // End gracefully
-            this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_EXTRACT_ENDED, handlerName: this._mapID });
         }
     }
 
@@ -593,7 +586,7 @@ export default class CZSEngine {
             layer.gvLayers.setZIndex(zindex);
             await this._cgpvapi.utilities.whenThisThenAsync(() => {
                 return layer.gvLayers.state_.zIndex === zindex;
-            }, 10000);
+            }, 100, 10000);
         }
     }
 
@@ -625,7 +618,7 @@ export default class CZSEngine {
 
             else {
                 // Add raster collection
-                this.addCollectionRasterAsync(coll_info, geom);
+                await this.addCollectionRasterAsync(coll_info, geom);
             }
         }
 

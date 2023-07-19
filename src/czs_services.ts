@@ -2,7 +2,10 @@ import {
     PyGeoAPICollectionsResponsePayload,
     PyGeoAPICollectionsCollectionResponsePayload,
     PyGeoAPIRecordsResponsePayload,
-    PyGeoAPIRecordsDataResponsePayload
+    PyGeoAPIRecordsDataResponsePayload,
+    PyGeoAPIJobIDResponsePayload,
+    PyGeoAPIJobStatusResponsePayload,
+    PyGeoAPIJobResultResponsePayload
 } from './czs_types';
 
 export default class CZSServices {
@@ -45,8 +48,8 @@ export default class CZSServices {
         return promise;
     };
 
-    static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number) => {
-        let promise = new Promise((resolve, reject) => {
+    static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number): Promise<PyGeoAPIJobIDResponsePayload> => {
+        let promise = new Promise<PyGeoAPIJobIDResponsePayload>((resolve, reject) => {
             fetch(PYGEOAPI_URL_EXTRACT_PROCESS, {
                 headers: {
                     'Accept': 'application/json',
@@ -63,7 +66,7 @@ export default class CZSServices {
                 })
             }).then((response) => {
                 // Only process valid response
-                if (response.status === 200) {
+                if (response.status === 200 || response.status === 201) {
                     response.json().then((data: any) => {
                         // Resolve
                         resolve(data);
@@ -91,6 +94,76 @@ export default class CZSServices {
             }).catch((error) => {
                 console.log(error);
                 reject("Failed to communicate with the server to extract the data.");
+            });
+        });
+
+        // Return the promise
+        return promise;
+    };
+
+    static getJobStatusAsync = async (jobId: string): Promise<PyGeoAPIJobStatusResponsePayload> => {
+        let url = PYGEOAPI_URL_JOBS.replace("{jobId}", jobId);
+        let promise = new Promise<PyGeoAPIJobStatusResponsePayload>((resolve, reject) => {
+            fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "GET"
+            }).then((response) => {
+                // Only process valid response
+                if (response.status === 200) {
+                    response.json().then((data: any) => {
+                        // Resolve
+                        resolve(data);
+                    }).catch((err) => {
+                        console.log(err);
+                        reject("Invalid response returned by the server.");
+                    });
+                }
+
+                else {
+                    console.log("Invalid status: " + response.status);
+                    reject("The server couldn't get the job status.");
+                }
+            }).catch((error) => {
+                console.log(error);
+                reject("Failed to communicate with the server to check the job status.");
+            });
+        });
+
+        // Return the promise
+        return promise;
+    };
+
+    static getJobResultAsync = async (jobId: string): Promise<PyGeoAPIJobResultResponsePayload> => {
+        let url = PYGEOAPI_URL_JOBS_RESULTS.replace("{jobId}", jobId);
+        let promise = new Promise<PyGeoAPIJobResultResponsePayload>((resolve, reject) => {
+            fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                method: "GET"
+            }).then((response) => {
+                // Only process valid response
+                if (response.status === 200) {
+                    response.json().then((data: any) => {
+                        // Resolve
+                        resolve(data);
+                    }).catch((err) => {
+                        console.log(err);
+                        reject("Invalid response returned by the server.");
+                    });
+                }
+
+                else {
+                    console.log("Invalid status: " + response.status);
+                    reject("The server couldn't get the job status.");
+                }
+            }).catch((error) => {
+                console.log(error);
+                reject("Failed to communicate with the server to check the job status.");
             });
         });
 

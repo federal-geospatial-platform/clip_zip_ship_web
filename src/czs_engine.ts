@@ -342,9 +342,9 @@ export default class CZSEngine {
         else {
             // Raster type, those are added like a regular layer
             const lyr = await this._map.layer.getGeoviewLayerByIdAsync(collection_id, true);
-            let zindex = lyr.gvLayers.getZIndex();
+            let zindex = lyr.gvLayers!.getZIndex();
             zindex++;
-            await this.setZIndexAsync(lyr, zindex);
+            lyr.gvLayers!.setZIndex(zindex);
             return true;
         }
     }
@@ -363,9 +363,9 @@ export default class CZSEngine {
         else {
             // Raster type, those are added like a regular layer
             const lyr = await this._map.layer.getGeoviewLayerByIdAsync(collection_id, true);
-            let zindex = lyr.gvLayers.getZIndex();
+            let zindex = lyr.gvLayers!.getZIndex();
             zindex--;
-            await this.setZIndexAsync(lyr, zindex);
+            lyr.gvLayers!.setZIndex(zindex);
             return true;
         }
     }
@@ -574,22 +574,6 @@ export default class CZSEngine {
         }
     }
 
-
-
-    /**
-     * Set the z-index of a layer and one can await until it's actually set and effective.
-     *
-     * @param {number} zindex The z-index to set.
-     */
-    setZIndexAsync = async (layer: any, zindex: number): Promise<void> => {
-        if (layer.gvLayers) {
-            layer.gvLayers.setZIndex(zindex);
-            await this._cgpvapi.utilities.whenThisThenAsync(() => {
-                return layer.gvLayers.state_.zIndex === zindex;
-            }, 100, 10000);
-        }
-    }
-
     getCheckedCollections = () => {
         let checkedcolls: string[] = [];
         Object.keys(this._checkedCollections).forEach((the_key: string) => {
@@ -671,38 +655,6 @@ export default class CZSEngine {
     }
 
     addCollectionRasterAsync = async (coll_info: PyGeoAPICollectionsCollectionResponsePayload, geom?: any): Promise<boolean> => {
-        // Prep the config
-        let layerConfig = {
-            'geoviewLayerType': 'ogcWms',
-            'geoviewLayerId': coll_info.id,
-            'geoviewLayerName': { 'en': coll_info.title, 'fr': coll_info.title },
-            'metadataAccessPath': { 'en': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent, 'fr': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent },
-            'listOfLayerEntryConfig': [
-                {
-                    'layerId': coll_info.short_name,
-                    'layerName': { 'en': coll_info.title, 'fr': coll_info.title },
-                    'source': {
-                        'dataProjection': "EPSG:4326" // Default.. will be set later
-                    },
-                }
-            ]
-        };
-
-        // If crs is defined
-        if (coll_info.crs && coll_info.crs.length > 0 && Number.isInteger(coll_info.crs[0]))
-            layerConfig['listOfLayerEntryConfig'][0]['source']['dataProjection'] = 'EPSG:' + coll_info.crs[0];
-
-        if (this._isDebug) {
-            layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/hydro_network_en', 'fr': 'https://maps.geogratis.gc.ca/wms/hydro_network_en' };
-            layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'hydro_network';
-            layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'hydro_network', 'fr': 'hydro_network' };
-            if (coll_info.id == "cdem_mpi__cdem") {
-                layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/railway_en', 'fr': 'https://maps.geogratis.gc.ca/wms/railway_fr' };
-                layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'railway';
-                layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'Railways', 'fr': 'Chemins de fer' };
-            }
-        }
-
         // If already visible
         if (this._viewedCollections[coll_info.id] && this._viewedCollections[coll_info.id].type == "raster") {
             // Get the layer as soon as it's in the api
@@ -716,19 +668,48 @@ export default class CZSEngine {
             // Flush the collection, in case it's been set as a footprint
             this.removeCollection(coll_info.id);
 
+            // Prep the config
+            let layerConfig = {
+                'geoviewLayerType': 'ogcWms',
+                'geoviewLayerId': coll_info.id,
+                'geoviewLayerName': { 'en': coll_info.title, 'fr': coll_info.title },
+                'metadataAccessPath': { 'en': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent, 'fr': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent },
+                'listOfLayerEntryConfig': [
+                    {
+                        'layerId': coll_info.short_name,
+                        'layerName': { 'en': coll_info.title, 'fr': coll_info.title },
+                        'source': {
+                            'dataProjection': "EPSG:4326" // Default.. will be set later
+                        },
+                    }
+                ]
+            };
+
+            // If crs is defined
+            if (coll_info.crs && coll_info.crs.length > 0 && Number.isInteger(coll_info.crs[0]))
+                layerConfig['listOfLayerEntryConfig'][0]['source']['dataProjection'] = 'EPSG:' + coll_info.crs[0];
+
+            if (this._isDebug) {
+                layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/hydro_network_en', 'fr': 'https://maps.geogratis.gc.ca/wms/hydro_network_en' };
+                layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'hydro_network';
+                layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'hydro_network', 'fr': 'hydro_network' };
+                if (coll_info.id == "cdem_mpi__cdem") {
+                    layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/railway_en', 'fr': 'https://maps.geogratis.gc.ca/wms/railway_fr' };
+                    layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'railway';
+                    layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'Railways', 'fr': 'Chemins de fer' };
+                }
+            }
+
             // Add the layer
             this._map.layer.addGeoviewLayer(layerConfig);
 
-            // Get the layer as soon as it's in the api
-            let lyr = await this._map.layer.getGeoviewLayerByIdAsync(coll_info.id, false);
+            // Get the layer as soon as it's in the api AND loaded on the map
+            let lyr = await this._map.layer.getGeoviewLayerByIdAsync(coll_info.id, true);
 
             // Set the visible extent for the layer
             this.adjustExtentOnLayerID(lyr, geom);
 
-            // Get the layer as soon as it's in the api AND loaded on the map
-            lyr = await this._map.layer.getGeoviewLayerByIdAsync(coll_info.id, true);
-
-            // Now we can adjust its z-index
+            // Adjust its z-index
             lyr.gvLayers.setZIndex(CZSEngine.Z_INDEX_RASTERS);
 
             // Keep track

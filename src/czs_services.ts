@@ -174,7 +174,7 @@ export default class CZSServices {
     static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number): Promise<PyGeoAPIRecordsResponsePayload> => {
         let url = PYGEOAPI_URL_FEATURES_EXTRACT.replace("{collectionId}", collection.id);
         if (geom_wkt)
-            url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=true";
+            url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=2";
         let promise = new Promise<PyGeoAPIRecordsResponsePayload>((resolve, reject) => {
             fetch(url, {
                 headers: {

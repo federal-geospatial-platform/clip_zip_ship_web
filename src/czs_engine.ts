@@ -341,7 +341,7 @@ export default class CZSEngine {
 
         else {
             // Raster type, those are added like a regular layer
-            const lyr = await this._map.layer.getGeoviewLayerByIdAsync(collection_id, true);
+            const lyr = await this.getLayerAsync(collection_id);
             let zindex = lyr.gvLayers!.getZIndex();
             zindex++;
             lyr.gvLayers!.setZIndex(zindex);
@@ -362,7 +362,7 @@ export default class CZSEngine {
 
         else {
             // Raster type, those are added like a regular layer
-            const lyr = await this._map.layer.getGeoviewLayerByIdAsync(collection_id, true);
+            const lyr = await this.getLayerAsync(collection_id);
             let zindex = lyr.gvLayers!.getZIndex();
             zindex--;
             lyr.gvLayers!.setZIndex(zindex);
@@ -658,7 +658,7 @@ export default class CZSEngine {
         // If already visible
         if (this._viewedCollections[coll_info.id] && this._viewedCollections[coll_info.id].type == "raster") {
             // Get the layer as soon as it's in the api
-            let lyr = await this._map.layer.getGeoviewLayerByIdAsync(coll_info.id, false);
+            let lyr = await this.getLayerAsync(coll_info.id);
 
             // Set the visible extent for the layer
             this.adjustExtentOnLayerID(lyr, geom);
@@ -693,18 +693,18 @@ export default class CZSEngine {
                 layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/hydro_network_en', 'fr': 'https://maps.geogratis.gc.ca/wms/hydro_network_en' };
                 layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'hydro_network';
                 layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'hydro_network', 'fr': 'hydro_network' };
-                if (coll_info.id == "cdem_mpi__cdem") {
-                    layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/railway_en', 'fr': 'https://maps.geogratis.gc.ca/wms/railway_fr' };
-                    layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'railway';
-                    layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'Railways', 'fr': 'Chemins de fer' };
-                }
+                // if (coll_info.id == "cdem_mpi__cdem") {
+                //     layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/railway_en', 'fr': 'https://maps.geogratis.gc.ca/wms/railway_fr' };
+                //     layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'railway';
+                //     layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'Railways', 'fr': 'Chemins de fer' };
+                // }
             }
 
             // Add the layer
             this._map.layer.addGeoviewLayer(layerConfig);
 
             // Get the layer as soon as it's in the api AND loaded on the map
-            let lyr = await this._map.layer.getGeoviewLayerByIdAsync(coll_info.id, true);
+            let lyr = await this.getLayerAsync(coll_info.id);
 
             // Set the visible extent for the layer
             this.adjustExtentOnLayerID(lyr, geom);
@@ -882,6 +882,14 @@ export default class CZSEngine {
                 }
             }
         });
+    }
+
+    getLayerAsync = async (coll_id: string): Promise<any | null> => {
+        // Layer types
+        // console.log("YO", this._cgpvapi.layerTypes);
+
+        // Return the layer once loaded
+        return await this._map.layer.getGeoviewLayerByIdAsync(coll_id, true, 200, 20000);
     }
 
 }

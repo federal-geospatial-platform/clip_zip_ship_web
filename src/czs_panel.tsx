@@ -2,7 +2,8 @@ import {
     CZS_EVENT_NAMES,
     ThemeCollections,
     ParentCollections,
-    PyGeoAPICollectionsCollectionResponsePayload
+    PyGeoAPICollectionsCollectionResponsePayload,
+    PyGeoAPICollectionsCollectionLinkResponsePayload
 } from './czs_types';
 import CZSUtils from './czs_utils';
 import CZSJobs from './czs_job';
@@ -43,7 +44,6 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     //const { makeStyles, useTheme } = ui;
     const { Button, CircularProgress, Accordion, CheckboxListEnhanced, TextField, Menu, MenuItem, ListItem, ListItemText, ListItemIcon } = ui.elements;
     const MAP_ID = "mapCZS";
-
     // Translation
     const { t, i18n } = useTranslation();
 
@@ -409,7 +409,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         //console.log("renderMenuOptions");
 
         // Read info
-        let link = null;
+        let link: PyGeoAPICollectionsCollectionLinkResponsePayload | null = null;
         if (contextMenuCollection)
             link = CZSUtils.getContentMetadata(contextMenuCollection.links);
 

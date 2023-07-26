@@ -541,7 +541,7 @@ export default class CZSEngine {
             this.onUpdateLayersStarted();
 
             // For each checked collections
-            let promises = [];
+            let promises:Promise<boolean>[] = [];
             for (const coll_id of this.getCheckedCollections()) {
                 // Find the collection information for that collection id
                 let coll_info = this.findCollectionFromID(coll_id);

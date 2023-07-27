@@ -590,7 +590,7 @@ export default class CZSEngine {
         //console.log("addCollectionAsync : " + coll_info.id)
 
         // Check if extraction area is big enough
-        if (geom && this.getAreaInKm2(geom) <= coll_info.max_area) {
+        if (geom && this.getAreaInKm2(geom) <= coll_info.max_extract_area) {
             // Depending on the collection type
             if (coll_info.itemType == "feature") {
                 // Flush the geometry group
@@ -703,6 +703,12 @@ export default class CZSEngine {
             // Add the layer
             this._map.layer.addGeoviewLayer(layerConfig);
 
+            // Keep track
+            this._viewedCollections[coll_info.id] = {
+                type: 'raster',
+                info: layerConfig
+            };
+
             // Get the layer as soon as it's in the api AND loaded on the map
             let lyr = await this.getLayerAsync(coll_info.id);
 
@@ -711,12 +717,6 @@ export default class CZSEngine {
 
             // Adjust its z-index
             lyr.gvLayers.setZIndex(CZSEngine.Z_INDEX_RASTERS);
-
-            // Keep track
-            this._viewedCollections[coll_info.id] = {
-                type: 'raster',
-                info: layerConfig
-            };
 
             // Emit
             this._cgpvapi.event.emit({ event: CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_COVERAGES, handlerName: this._mapID, collection: coll_info });
@@ -889,7 +889,7 @@ export default class CZSEngine {
         // console.log("YO", this._cgpvapi.layerTypes);
 
         // Return the layer once loaded
-        return await this._map.layer.getGeoviewLayerByIdAsync(coll_id, true, 200, 20000);
+        return await this._map.layer.getGeoviewLayerByIdAsync(coll_id, true, 200, 30000);
     }
 
 }

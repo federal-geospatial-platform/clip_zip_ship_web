@@ -46,7 +46,7 @@ export type PyGeoAPICollectionsCollectionResponsePayload = {
     short_name: string;
     org_schema: string;
     crs: string[];
-    max_area: number;
+    max_extract_area: number;
 
     wkt: string; // Only available when only 1 collection description has been queried
 };

@@ -13,7 +13,6 @@
     "view_metadata":"Visualiser les métadonnées",
     "layer_bring_to_front": "Placer en avant",
     "layer_send_to_back": "Placer en arrière",
-    "msg_pre_release": "Ceci est une version pre-alpha. Seulement pour fins d'expérimentation.",
     "success_extraction_completed": "Extraction complété, regardez vos courriels!",
     "success_extraction_failed": "Extraction échouée",
     "warning_extraction_area_too_big": "Zone d'extraction trop grande pour la collection",

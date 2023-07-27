@@ -87,9 +87,6 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         i18n.addResourceBundle("en", "translation", T_EN);
         i18n.addResourceBundle("fr", "translation", T_FR);
 
-        // Show temporary message
-        api.utilities.showMessage(MAP_ID, t('czs.msg_pre_release'));
-
         // Listen to the engine load collections started event
         api.event.on(
             CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_STARTED,
@@ -244,7 +241,25 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             MAP_ID
         );
 
-    }, []);
+        return () => {
+            api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_STARTED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_FEATURES, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_COVERAGES, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_ENDED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_STARTED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_COLLECTION_CHANGED_ENDED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_LAYER_ORDERED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_STARTED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_FOOTPRINT_NO_GEOM, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_UPDATE_VIEWED_COLLECTIONS_ENDED, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_ERROR, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_ERROR_ZOOMING_OUTSIDE, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_ERROR_SHOWING_COLLECTION, MAP_ID);
+            api.event.off(CZS_EVENT_NAMES.ENGINE_ERROR_EXTRACTING, MAP_ID);
+        };
+    }, []
+    );
 
     function handleStartDrawing() {
         props.handleStartDrawing?.();

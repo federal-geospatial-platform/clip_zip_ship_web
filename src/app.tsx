@@ -15,9 +15,11 @@ const App = (): JSX.Element => {
 	const w = window as any;
     const cgpv = w['cgpv'];
     const { react } = cgpv;
-    const { useEffect } = react;
+    const { useEffect, useRef } = react;
     const MAP_ID = "mapCZS";
     let czs_engine: CZSEngine;
+
+    const effectRan = useRef(false);
 
     function handleStartDrawing() {
         // Start the Engine drawing
@@ -68,42 +70,49 @@ const App = (): JSX.Element => {
     }
 
     useEffect(() => {
-        // Initialize the map
-        cgpv.init(function () {
-            // Now that the API is initialized;
-            // Initialize the CZS Engine
-            czs_engine = new CZSEngine(cgpv, MAP_ID, document.documentElement.lang);
+        // Make sure cgpv init is called only once even on multiple useEffect calls, especially since React 18.
+        if (!effectRan.current) {
+            // Initialize the API
+            cgpv.init(() => {
+                // Show temporary message
+                cgpv.api.utilities.showMessage(MAP_ID, "This is a pre-alpha release. Only for experimentation purposes.");
 
-            // Button
-            const button = {
-                id: 'AppbarPanelButtonId',
-                tooltip: 'Clip Zip Ship',
-                tooltipPlacement: 'right',
-                children: cgpv.react.createElement(cgpv.ui.elements.AppsIcon),
-            };
+                // Initialize the CZS Engine
+                czs_engine = new CZSEngine(cgpv, MAP_ID, document.documentElement.lang);
 
-            // Panel
-            const panel = {
-                panelId: 'CZSPanelID',
-                title: 'Clip Zip Ship (PRE-ALPHA BUILD)',
-                content: cgpv.react.createElement(CZSPanel, {
-                    handleStartDrawing,
-                    handleClearDrawing,
-                    handleExtractFeatures,
-                    handleZoomToCollection,
-                    handleViewCapabilitiesCollection,
-                    handleViewMetadataCollection,
-                    handleHigher,
-                    handleLower,
-                    handleCollectionCheckedChanged
-                }),
-                width: 450,
-            };
+                // Button
+                const button = {
+                    id: 'AppbarPanelButtonId',
+                    tooltip: 'Clip Zip Ship',
+                    tooltipPlacement: 'right',
+                    children: cgpv.react.createElement(cgpv.ui.elements.AppsIcon),
+                };
 
-            // Call an api function to add a panel with a button in the default group
-            cgpv.api.map(MAP_ID).appBarButtons.createAppbarPanel(button, panel, null);
-        });
+                // Panel
+                const panel = {
+                    panelId: 'CZSPanelID',
+                    title: 'Clip Zip Ship',
+                    content: cgpv.react.createElement(CZSPanel, {
+                        handleStartDrawing,
+                        handleClearDrawing,
+                        handleExtractFeatures,
+                        handleZoomToCollection,
+                        handleViewCapabilitiesCollection,
+                        handleViewMetadataCollection,
+                        handleHigher,
+                        handleLower,
+                        handleCollectionCheckedChanged
+                    }),
+                    width: 450,
+                };
 
+                // Call an api function to add a panel with a button in the default group
+                cgpv.api.map(MAP_ID).appBarButtons.createAppbarPanel(button, panel, null);
+            });
+        }
+
+        // Use Effect ran once
+        return () => effectRan.current = true;
     }, []);
 
     return (

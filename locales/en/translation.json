@@ -13,7 +13,6 @@
     "view_metadata": "View Metadata",
     "layer_bring_to_front": "Bring To Front",
     "layer_send_to_back": "Send To Back",
-    "msg_pre_release": "This is a pre-alpha release. Only for experimentation purposes.",
     "success_extraction_completed": "Extraction completed, check your emails!",
     "success_extraction_failed": "Extraction failed",
     "warning_extraction_area_too_big": "Extraction area too big for collection",

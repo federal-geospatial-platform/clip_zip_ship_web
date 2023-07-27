@@ -3,7 +3,7 @@ import "./app.scss";
 
 // Fetch the cgpv module
 const w = window as any;
-const { react, reactDOM } = w['cgpv'];
+const { react, createRoot } = w['cgpv'];
 const MAP_ID = "mapCZS";
 
 // Check the html page language so that we load the application with the corresponding language
@@ -33,8 +33,8 @@ const map_config = {
 };
 
 // Create the root for the application to reside into
-const container = document.getElementById('root');
-reactDOM.render(
+const container = createRoot(document.getElementById("root") as HTMLElement);
+container.render(
 	<react.StrictMode>
 		<App />
 		<div
@@ -44,5 +44,5 @@ reactDOM.render(
 			data-lang={lang}
 			data-config={ JSON.stringify(map_config) }
 		></div>
-	</react.StrictMode>, container
+	</react.StrictMode>
 );

@@ -14,7 +14,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist-package.zip
+          files: dist-package
       #- name: release
       #  uses: actions/create-release@v1
       #  id: create_release

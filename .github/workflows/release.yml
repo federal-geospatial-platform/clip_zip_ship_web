@@ -7,11 +7,12 @@ on:
 jobs:
   # Build the artifacts
   build_artifacts:
+    name: Build the artifacts
     uses: ./.github/workflows/build.yml
 
   # Add the artifact to the release
   add_artifact_to_the_release:
-    name: release_artifacts
+    name: Attach artifacts to the release
     needs: build_artifacts
     runs-on: ubuntu-latest
     steps:

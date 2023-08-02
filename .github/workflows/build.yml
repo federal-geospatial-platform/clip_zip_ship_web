@@ -31,7 +31,7 @@ jobs:
 
       # Push to the gh-pages branch
       - name: push_to_branch
-        uses: s0/git-publish-subdir-action@develop
+        uses: s0/git-publish-subdir-action@main
         env:
           REPO: self
           BRANCH: gh-pages # The branch name where you want to push the assets

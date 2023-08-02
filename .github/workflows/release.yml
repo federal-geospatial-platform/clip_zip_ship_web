@@ -5,6 +5,7 @@ on:
       - '*'
 
 jobs:
+  # Build the artifacts
   build_artifacts:
     uses: ./.github/workflows/build.yml
   
@@ -13,26 +14,40 @@ jobs:
     needs: build_artifacts
     runs-on: ubuntu-latest
     steps:
+      # Download the artifact from the tag
       - name: download_artifact
         uses: actions/download-artifact@v3
         id: download
         with:
           name: dist-package
           path: ~/dist
+      
       #- name: Echo output
       #  run: echo ${{steps.download.outputs.download-path}}
       #- name: Display structure of downloaded files
       #  run: ls -R
       #  working-directory: ${{steps.download.outputs.download-path}}
+
+      # Add the artifact to the release
       - name: add_artifact_to_release
         uses: softprops/action-gh-release@v1
         with:
           files: ${{steps.download.outputs.download-path}}/*
 
+      # Push to the gh-pages branch
+      - name: push_to_branch
+        uses: s0/git-publish-subdir-action@develop
+        env:
+          REPO: self
+          BRANCH: gh-pages # The branch name where you want to push the assets
+          FOLDER: dist # The directory where your assets are generated
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # GitHub will automatically add this - you don't need to bother getting a token
+          MESSAGE: "Build: ({sha}) {msg}" # The commit message
+
   # Deploy job
   push_artifact_to_github_pages:
     # Add a dependency to the build artifact
-    needs: build_artifacts
+    needs: add_artifact_to_the_release
 
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
     permissions:

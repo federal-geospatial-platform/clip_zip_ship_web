@@ -4,14 +4,16 @@ on:
     tags:
       - '*'
 jobs:
-  build_artifact:
-    uses: ./.github/workflows/build.yml
-  build_release:
-    name: build_release
-    needs: build_artifact
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Release
+      - name: build_artifact
+        uses: ./.github/workflows/build.yml
+      - name: download_artifact
+        uses: actions/download-artifact@v2
+        with:
+          path: dist
+      - name: build_release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/*

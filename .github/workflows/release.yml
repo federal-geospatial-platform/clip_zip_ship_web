@@ -15,10 +15,12 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           path: dist
+      - name: 'Echo download path'
+        run: echo ${{steps.download.outputs.download-path}}
       - name: build_release
         uses: softprops/action-gh-release@v1
         with:
-          files: dist/*
+          files: ${{steps.download.outputs.download-path}}/dist/*
       #- name: release
       #  uses: actions/create-release@v1
       #  id: create_release

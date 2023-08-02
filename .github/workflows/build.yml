@@ -6,16 +6,40 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+      
       - name: npm install, build, and test
         run: |
           npm install
           npm run build --if-present
+      
       - name: Zip dist
         uses: montudor/action-zip@v1
         with:
           args: zip -qq -r dist.zip dist
-      - name: Archive production artifacts
+      
+      - name: Upload deployment artifact
         uses: actions/upload-artifact@v3
         with:
           name: dist-package
           path: dist.zip
+
+      - name: Archive artifact
+        shell: sh
+        run: |
+          tar \
+            --dereference --hard-dereference \
+            --directory "$INPUT_PATH" \
+            -cvf "$RUNNER_TEMP/artifact.tar" \
+            --exclude=.git \
+            --exclude=.github \
+            .
+        env:
+          INPUT_PATH: dist
+
+      - name: Upload gh-pages artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 0
+          if-no-files-found: error

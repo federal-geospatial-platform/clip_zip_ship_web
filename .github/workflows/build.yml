@@ -1,5 +1,6 @@
-name: Build artifact
+name: Build artifacts
 on: [push, workflow_call]
+
 jobs:
   # Build the website and create artifacts
   build_and_create_artifact:

@@ -16,8 +16,8 @@ jobs:
     steps:
       
       # Checkout
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - name: checkout
+        uses: actions/checkout@master
         
       # Download the artifact from the tag
       - name: download_artifact

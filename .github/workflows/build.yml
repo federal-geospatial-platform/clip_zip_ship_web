@@ -15,7 +15,7 @@ jobs:
       - name: Zip dist
         uses: montudor/action-zip@v1
         with:
-          args: zip -qq -r dist.zip dist
+          args: zip -qq -r ${{ runner.temp }}/dist.zip dist
       
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v3

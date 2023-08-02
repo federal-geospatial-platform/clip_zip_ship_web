@@ -26,7 +26,7 @@ jobs:
       
       # Zip the dist folder into dist.zip file
       - name: Zip dist
-        run: zip -r /dist.zip .
+        run: zip -r dist.zip .
         working-directory: dist
 
       #- name: Echo output
@@ -40,4 +40,4 @@ jobs:
       - name: Add the zipped artifact to the release
         uses: softprops/action-gh-release@v1
         with:
-          files: /dist.zip
+          files: dist/dist.zip

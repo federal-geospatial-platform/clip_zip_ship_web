@@ -16,18 +16,12 @@ jobs:
           npm install
           npm run build --if-present
 
-      # Zip the dist folder into dist.zip file
-      - name: Zip dist
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r dist.zip dist
-      
       # Add the dist.zip file as an artifact for the build
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v3
         with:
           name: dist-package
-          path: dist.zip
+          path: dist
 
       # Push to the gh-pages branch
       - name: push_to_branch

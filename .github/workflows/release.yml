@@ -25,7 +25,7 @@ jobs:
       
       # Zip the dist folder into dist.zip file
       - name: Zip dist
-        run: zip -r -q dist.zip dist
+        run: zip -r dist.zip ./dist/*
       
       #- name: Echo output
       #  run: echo ${{steps.download.outputs.download-path}}

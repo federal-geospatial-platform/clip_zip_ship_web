@@ -4,11 +4,12 @@ on:
     tags:
       - '*'
 jobs:
-  build_artifact:
+  build_artifacts:
     uses: ./.github/workflows/build.yml
+  
   build_release:
     name: build_release
-    needs: build_artifact
+    needs: build_artifacts
     runs-on: ubuntu-latest
     steps:
       - name: download_artifact
@@ -17,32 +18,34 @@ jobs:
         with:
           name: dist-package
           path: ~/dist
-      - name: Echo output
-        run: echo ${{steps.download.outputs.download-path}}
-      - name: Display structure of downloaded files
-        run: ls -R
-        working-directory: ${{steps.download.outputs.download-path}}
-      - name: build_release
+      #- name: Echo output
+      #  run: echo ${{steps.download.outputs.download-path}}
+      #- name: Display structure of downloaded files
+      #  run: ls -R
+      #  working-directory: ${{steps.download.outputs.download-path}}
+      - name: add_artifact_to_release
         uses: softprops/action-gh-release@v1
         with:
           files: ${{steps.download.outputs.download-path}}/*
           
-      #- name: release
-      #  uses: actions/create-release@v1
-      #  id: create_release
-      #  with:
-      #    draft: false
-      #    prerelease: false
-      #    release_name: ${{ steps.version.outputs.version }}
-      #    tag_name: ${{ github.ref }}
-      #  env:
-      #    GITHUB_TOKEN: ${{ github.token }}
-      #- name: attach release asset artifact
-      #  uses: actions/upload-release-asset@v1
-      #  env:
-      #    GITHUB_TOKEN: ${{ github.token }}
-      #  with:
-      #    upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #    asset_path: dist/dist-package.zip
-      #    asset_name: dist.zip
-      #    asset_content_type: application/gzip
+   # Deploy job
+  deploy_github_pages:
+    # Add a dependency to the build artifact
+    needs: build_artifacts
+
+    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+    permissions:
+      pages: write      # to deploy to Pages
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    # Deploy to the github-pages environment
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    # Specify runner + deployment step
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action

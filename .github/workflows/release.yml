@@ -18,7 +18,6 @@ jobs:
           path: ~/dist
       - name: Display structure of downloaded files
         run: ls -R
-        working-directory: ~/dist
       - name: build_release
         uses: softprops/action-gh-release@v1
         with:

@@ -25,10 +25,7 @@ jobs:
       
       # Zip the dist folder into dist.zip file
       - name: Zip dist
-        id: zip
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r dist.zip dist/*
+        run: zip -r -q dist.zip dist
       
       #- name: Echo output
       #  run: echo ${{steps.download.outputs.download-path}}

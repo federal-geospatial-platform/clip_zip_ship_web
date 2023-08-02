@@ -1,5 +1,5 @@
 name: Build artifact
-on: [push]
+on: [push, workflow_call]
 jobs:
   build_and_create_artifact:
     runs-on: ubuntu-latest

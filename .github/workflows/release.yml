@@ -11,6 +11,10 @@ jobs:
     needs: build_artifact
     runs-on: ubuntu-latest
     steps:
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist-package.zip
       #- name: release
       #  uses: actions/create-release@v1
       #  id: create_release
@@ -21,12 +25,12 @@ jobs:
       #    tag_name: ${{ github.ref }}
       #  env:
       #    GITHUB_TOKEN: ${{ github.token }}
-      - name: attach release asset artifact
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: dist/dist-package.zip
-          asset_name: dist.zip
-          asset_content_type: application/gzip
+      #- name: attach release asset artifact
+      #  uses: actions/upload-release-asset@v1
+      #  env:
+      #    GITHUB_TOKEN: ${{ github.token }}
+      #  with:
+      #    upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #    asset_path: dist/dist-package.zip
+      #    asset_name: dist.zip
+      #    asset_content_type: application/gzip

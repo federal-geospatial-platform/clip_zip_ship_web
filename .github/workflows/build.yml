@@ -1,4 +1,4 @@
-name: Node CI
+name: Build artifact
 on: [push]
 jobs:
   build_and_create_artifact:

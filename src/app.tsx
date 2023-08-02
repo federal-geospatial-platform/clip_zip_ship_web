@@ -2,6 +2,7 @@
 import CZSPanel from './czs_panel';
 import CZSEngine from './czs_engine';
 import { PyGeoAPICollectionsCollectionResponsePayload, ParentCollections } from './czs_types';
+import config from './czs-config.json';
 import CZSUtils from './czs_utils';
 
 /**
@@ -43,7 +44,7 @@ const App = (): JSX.Element => {
 
     async function handleViewCapabilitiesCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
         // Open a new window on the url
-        window.open(QGIS_SERVICE_URL_ROOT + collection.org_schema + "/" + collection.parent + '?service=WMS&version=1.3.0&request=GetCapabilities&LAYERS=' + collection.short_name, '_blank');
+        window.open(config.QGIS_SERVICE_URL_ROOT + collection.org_schema + "/" + collection.parent + '?service=WMS&version=1.3.0&request=GetCapabilities&LAYERS=' + collection.short_name, '_blank');
     }
 
     async function handleViewMetadataCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {

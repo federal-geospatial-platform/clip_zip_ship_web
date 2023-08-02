@@ -7,6 +7,7 @@ import {
     PyGeoAPIJobIDResponsePayload,
     ParentCollections
 } from './czs_types';
+import config from './czs-config.json';
 import CZSUtils from './czs_utils';
 import CZSServices from './czs_services';
 import ImageMarkerGreen from './assets/images/Marker_green.png';
@@ -673,7 +674,7 @@ export default class CZSEngine {
                 'geoviewLayerType': 'ogcWms',
                 'geoviewLayerId': coll_info.id,
                 'geoviewLayerName': { 'en': coll_info.title, 'fr': coll_info.title },
-                'metadataAccessPath': { 'en': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent, 'fr': QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent },
+                'metadataAccessPath': { 'en': config.QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent, 'fr': config.QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent },
                 'listOfLayerEntryConfig': [
                     {
                         'layerId': coll_info.short_name,

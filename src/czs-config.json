@@ -1,0 +1,4 @@
+{
+    "PYGEOAPI_URL_ROOT": "http://localhost:5000",
+    "QGIS_SERVICE_URL_ROOT": "https://qgis-stage.services.geo.ca/dev/"
+}

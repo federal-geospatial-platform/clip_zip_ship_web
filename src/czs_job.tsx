@@ -3,6 +3,7 @@ import {
     PyGeoAPIJobStatusResponsePayload,
     PyGeoAPIJobResultResponsePayload
 } from './czs_types';
+import config from './czs-config.json';
 import CZSUtils from './czs_utils';
 import T_EN from '../locales/en/translation.json';
 import T_FR from '../locales/fr/translation.json';
@@ -167,13 +168,13 @@ const CZSJobs = (props: CZSJobsProps): JSX.Element => {
                     <tr key={idx}>
                         <td className='czs-jobs-cell-info'>
                             {jobCompleted.length > 0 ? (
-                                <a href={PYGEOAPI_URL_ROOT + "/jobs/" + job.job_id} target="_blank">Extraction completed!</a>
+                                <a href={config.PYGEOAPI_URL_ROOT + "/jobs/" + job.job_id} target="_blank">Extraction completed!</a>
                             ) : (
                                 <div>
                                     {jobDismissed.length > 0 ? (
                                         <a className='job-dismissed'>Extraction queue is full!</a>
                                     ) : (
-                                        <a href={PYGEOAPI_URL_ROOT + "/jobs/" + job.job_id} target="_blank">Extraction started {job.local_date_start} ...</a>)
+                                        <a href={config.PYGEOAPI_URL_ROOT + "/jobs/" + job.job_id} target="_blank">Extraction started {job.local_date_start} ...</a>)
                                     }
                                 </div>
                             )}
@@ -206,7 +207,7 @@ const CZSJobs = (props: CZSJobsProps): JSX.Element => {
                                     )}
 
                                     {jobFailed.length > 0 ? (
-                                        <div><a href={PYGEOAPI_URL_ROOT + "/jobs/" + job.job_id + "/results?f=json"} target="_blank">FAILED</a></div>
+                                        <div><a href={config.PYGEOAPI_URL_ROOT + "/jobs/" + job.job_id + "/results?f=json"} target="_blank">FAILED</a></div>
                                     ) : (
                                         <div></div>
                                     )}

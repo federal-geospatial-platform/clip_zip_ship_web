@@ -7,12 +7,13 @@ import {
     PyGeoAPIJobStatusResponsePayload,
     PyGeoAPIJobResultResponsePayload
 } from './czs_types';
+import config from './czs-config.json';
 
 export default class CZSServices {
 
     static getCollectionsPOSTAsync = async (lang: string, geom_wkt: string, crs: number): Promise<PyGeoAPICollectionsCollectionResponsePayload[]> => {
         let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload[]>((resolve, reject) => {
-            fetch(PYGEOAPI_URL_ENDPOINT + "&lang=" + lang, {
+            fetch(config.PYGEOAPI_URL_ROOT + "/collections?f=json&lang=" + lang, {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
@@ -50,7 +51,7 @@ export default class CZSServices {
 
     static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number): Promise<PyGeoAPIJobIDResponsePayload> => {
         let promise = new Promise<PyGeoAPIJobIDResponsePayload>((resolve, reject) => {
-            fetch(PYGEOAPI_URL_EXTRACT_PROCESS, {
+            fetch(config.PYGEOAPI_URL_ROOT + "/processes/extract/execution", {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
@@ -102,7 +103,7 @@ export default class CZSServices {
     };
 
     static getJobStatusAsync = async (jobId: string): Promise<PyGeoAPIJobStatusResponsePayload> => {
-        let url = PYGEOAPI_URL_JOBS.replace("{jobId}", jobId);
+        let url = (config.PYGEOAPI_URL_ROOT + "/jobs/{jobId}?j=json").replace("{jobId}", jobId);
         let promise = new Promise<PyGeoAPIJobStatusResponsePayload>((resolve, reject) => {
             fetch(url, {
                 headers: {
@@ -137,7 +138,7 @@ export default class CZSServices {
     };
 
     static getJobResultAsync = async (jobId: string): Promise<PyGeoAPIJobResultResponsePayload> => {
-        let url = PYGEOAPI_URL_JOBS_RESULTS.replace("{jobId}", jobId);
+        let url = (config.PYGEOAPI_URL_ROOT + "/jobs/{jobId}/results?j=json").replace("{jobId}", jobId);
         let promise = new Promise<PyGeoAPIJobResultResponsePayload>((resolve, reject) => {
             fetch(url, {
                 headers: {
@@ -172,7 +173,7 @@ export default class CZSServices {
     };
 
     static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number): Promise<PyGeoAPIRecordsResponsePayload> => {
-        let url = PYGEOAPI_URL_FEATURES_EXTRACT.replace("{collectionId}", collection.id);
+        let url = (config.PYGEOAPI_URL_ROOT + "/collections/{collectionId}/items?f=json").replace("{collectionId}", collection.id);
         if (geom_wkt)
             url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=2";
         let promise = new Promise<PyGeoAPIRecordsResponsePayload>((resolve, reject) => {
@@ -223,7 +224,7 @@ export default class CZSServices {
     };
 
     static getCollectionWKTAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload): Promise<PyGeoAPICollectionsCollectionResponsePayload> => {
-        let url = PYGEOAPI_URL_COLLECTION_ID.replace("{collectionId}", collection.id);
+        let url = (config.PYGEOAPI_URL_ROOT + "/collections/{collectionId}?f=json").replace("{collectionId}", collection.id);
         let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload>((resolve, reject) => {
             fetch(url, {
                 headers: {

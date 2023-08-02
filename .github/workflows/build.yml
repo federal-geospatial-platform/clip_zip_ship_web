@@ -4,6 +4,7 @@ on: [push, workflow_call]
 jobs:
   # Build the website and create artifacts
   build_and_create_artifact:
+    name: Build and create artifacts
     runs-on: ubuntu-latest
     steps:
       # Checkout

@@ -10,10 +10,15 @@ jobs:
     uses: ./.github/workflows/build.yml
   
   add_artifact_to_the_release:
-    name: build_release
+    name: release_artifacts
     needs: build_artifacts
     runs-on: ubuntu-latest
     steps:
+      
+      # Checkout
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
       # Download the artifact from the tag
       - name: download_artifact
         uses: actions/download-artifact@v3

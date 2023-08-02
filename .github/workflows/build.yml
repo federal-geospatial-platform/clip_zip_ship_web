@@ -10,10 +10,12 @@ jobs:
         run: |
           npm install
           npm run build --if-present
+      - name: Zip dist
+        uses: montudor/action-zip@v1
+        with:
+          args: zip -qq -r dist-package.zip dist
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist-package
-          path: |
-            dist
-            !dist/**/*.md
+          path: dist-package.zip

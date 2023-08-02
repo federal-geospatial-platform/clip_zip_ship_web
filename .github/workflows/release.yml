@@ -17,7 +17,7 @@ jobs:
     steps:
       
       # Download the artifact from the tag
-      - name: download_artifact
+      - name: Download the artifact
         uses: actions/download-artifact@v3
         with:
           name: dist-package
@@ -28,7 +28,7 @@ jobs:
         id: zip
         uses: montudor/action-zip@v1
         with:
-          args: zip -qq -r dist.zip dist
+          args: zip -qq -r dist.zip dist/*
       
       #- name: Echo output
       #  run: echo ${{steps.download.outputs.download-path}}
@@ -38,7 +38,7 @@ jobs:
       #  working-directory: ${{steps.download.outputs.download-path}}
 
       # Add the artifact to the release
-      - name: add_artifact_to_release
+      - name: Add the zipped artifact to the release
         uses: softprops/action-gh-release@v1
         with:
           files: dist.zip

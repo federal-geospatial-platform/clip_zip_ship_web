@@ -1,5 +1,8 @@
 name: Build artifacts
-on: [push, workflow_call]
+on:
+  push:
+    branches: main
+  workflow_call:
 
 jobs:
   # Build the website and create artifacts

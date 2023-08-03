@@ -1,5 +1,4 @@
 import { PyGeoAPICollectionsCollectionLinkResponsePayload } from "./czs_types";
-import config from './czs-config.json';
 
 export default class CZSUtils {
 
@@ -10,11 +9,11 @@ export default class CZSUtils {
     static getPygeoapiHost = () => {
         if (CZSUtils.isLocal())
             return "http://localhost:5000";
-        return config.PYGEOAPI_URL_ROOT;
+        return PYGEOAPI_URL_ROOT;
     };
 
     static getQGISServiceHost = () => {
-        return config.QGIS_SERVICE_URL_ROOT;
+        return QGIS_SERVICE_URL_ROOT;
     };
 
     static getContentMetadata = (links: PyGeoAPICollectionsCollectionLinkResponsePayload[]): PyGeoAPICollectionsCollectionLinkResponsePayload | null => {

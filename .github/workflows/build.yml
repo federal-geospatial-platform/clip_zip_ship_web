@@ -17,6 +17,14 @@ jobs:
           npm install
           npm run build --if-present
 
+      # Download a version of the latest GeoView Core build
+      - uses: suisei-cn/actions-download-file@v1.3.0
+        id: downloadfile  # Remember to give an ID if you need the output filename
+        name: Download the file
+        with:
+          url: "https://federal-geospatial-platform.github.io/geoview_core/cgpv-main.js"
+          target: dist/
+
       # Add the dist.zip file as an artifact for the build
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v3

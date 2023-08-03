@@ -75,7 +75,10 @@ module.exports = {
 		}),
 		new CopyWebpackPlugin({
 			patterns: [
-			  { from: "src/main-config.js", to: "main-config.js" }
+			  { from: "src/main-config.js", to: "main-config.js" },
+			  { from: "src/main-config-dev.js", to: "main-config-dev.js" },
+			  { from: "src/main-config-stage.js", to: "main-config-stage.js" },
+			  { from: "src/main-config-prod.js", to: "main-config-prod.js" },
 			]
 		})
 	]

@@ -24,7 +24,7 @@ jobs:
           name: dist-package
           path: dist
       
-      # Zip the dist folder into dist.zip file
+      # Zip the dist folder into a dist.zip file
       - name: Zip dist
         run: zip -r dist.zip .
         working-directory: dist
@@ -36,8 +36,8 @@ jobs:
       #  run: ls -R
       #  working-directory: ${{steps.download.outputs.download-path}}
 
-      # Add the artifact to the release
-      - name: Add the zipped artifact to the release
+      # Add the zipped file to the release
+      - name: Add the zipped file to the release
         uses: softprops/action-gh-release@v1
         with:
           files: dist/dist.zip

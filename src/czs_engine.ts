@@ -7,7 +7,6 @@ import {
     PyGeoAPIJobIDResponsePayload,
     ParentCollections
 } from './czs_types';
-import config from './czs-config.json';
 import CZSUtils from './czs_utils';
 import CZSServices from './czs_services';
 import ImageMarkerGreen from './assets/images/Marker_green.png';
@@ -46,7 +45,6 @@ export default class CZSEngine {
     _checkedCollections: any = [];
     _viewedCollections: any = {};
     _orderingCollections: any = [];
-    _isDebug: boolean = window.location.hostname === "localhost";
 
     // Tasks watches
     __watcherLoadCollectionsCounter: number = 0;
@@ -674,7 +672,7 @@ export default class CZSEngine {
                 'geoviewLayerType': 'ogcWms',
                 'geoviewLayerId': coll_info.id,
                 'geoviewLayerName': { 'en': coll_info.title, 'fr': coll_info.title },
-                'metadataAccessPath': { 'en': config.QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent, 'fr': config.QGIS_SERVICE_URL_ROOT + coll_info.org_schema + '/' + coll_info.parent },
+                'metadataAccessPath': { 'en': CZSUtils.getQGISServiceHost() + coll_info.org_schema + '/' + coll_info.parent, 'fr': CZSUtils.getQGISServiceHost() + coll_info.org_schema + '/' + coll_info.parent },
                 'listOfLayerEntryConfig': [
                     {
                         'layerId': coll_info.short_name,
@@ -690,7 +688,7 @@ export default class CZSEngine {
             if (coll_info.crs && coll_info.crs.length > 0 && Number.isInteger(coll_info.crs[0]))
                 layerConfig['listOfLayerEntryConfig'][0]['source']['dataProjection'] = 'EPSG:' + coll_info.crs[0];
 
-            if (this._isDebug) {
+            if (CZSUtils.isLocal()) {
                 layerConfig['metadataAccessPath'] = { 'en': 'https://maps.geogratis.gc.ca/wms/hydro_network_en', 'fr': 'https://maps.geogratis.gc.ca/wms/hydro_network_en' };
                 layerConfig['listOfLayerEntryConfig'][0]['layerId'] = 'hydro_network';
                 layerConfig['listOfLayerEntryConfig'][0]['layerName'] = { 'en': 'hydro_network', 'fr': 'hydro_network' };

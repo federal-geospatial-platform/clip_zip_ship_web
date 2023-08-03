@@ -1,1 +1,1 @@
-const PYGEOAPI_URL_ROOT="https://czs-pygeoapi.ddr-dev.services.geo.ca",QGIS_SERVICE_URL_ROOT="https://qgis-stage.services.geo.ca/dev/";
+const PYGEOAPI_URL_ROOT="https://api.czs-dev.services.geo.ca",QGIS_SERVICE_URL_ROOT="https://qgis-dev.services.geo.ca/ows/";

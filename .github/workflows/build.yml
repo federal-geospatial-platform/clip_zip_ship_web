@@ -4,6 +4,7 @@ on: [push, workflow_call]
 jobs:
   # Build the website and create artifacts
   build_and_create_artifact:
+    name: Build and create artifacts
     runs-on: ubuntu-latest
     steps:
       # Checkout
@@ -16,21 +17,15 @@ jobs:
           npm install
           npm run build --if-present
 
-      # Zip the dist folder into dist.zip file
-      - name: Zip dist
-        uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r dist.zip dist
-      
       # Add the dist.zip file as an artifact for the build
       - name: Upload deployment artifact
         uses: actions/upload-artifact@v3
         with:
           name: dist-package
-          path: dist.zip
+          path: dist
 
       # Push to the gh-pages branch
-      - name: push_to_branch
+      - name: Push to gh-pages branch
         uses: s0/git-publish-subdir-action@develop
         env:
           REPO: self

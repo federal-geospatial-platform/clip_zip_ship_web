@@ -18,6 +18,6 @@
     "warning_extraction_area_too_big": "Zone d'extraction trop grande pour la collection",
     "warning_extraction_area_missing": "Zone d'extraction manquante, seulement les empreintes des données sont affichés",
     "error_some_elements_outside": "Certains éléments sont en dehors de l'étendu cartographique.",
-    "help_text":"Bonjour,<br/>Pour soumettre votre demande d'extraction de données dynamique, il suffit de remplir les 3 conditions suivantes dans l'ordre que vous désirez:<ol><li>Sélectionner une ou plusieurs collections</li><li>Tracer un polygone de découpage sur la carte</li><li>Entrer votre adresse courriel</li></ol><br/>Pour de l'aide supplémentaire, contactez: <a href='mailto:ddr.fgpservices-servicespgf.rdd@aws.nrcan-rncan.cloud'>ddr.fgpservices-servicespgf.rdd@aws.nrcan-rncan.cloud</a>"
+    "help_text":"Bonjour,<br/>Pour soumettre votre demande d'extraction de données dynamique, il suffit de remplir les 3 conditions suivantes dans l'ordre que vous désirez:<ol><li>Sélectionner une ou plusieurs collections</li><li>Tracer un polygone de découpage sur la carte</li><li>Entrer votre adresse courriel</li></ol><br/>Pour de l'aide supplémentaire, contactez: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>EMAIL</a>"
   }
 }

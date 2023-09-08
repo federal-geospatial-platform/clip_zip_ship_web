@@ -31,9 +31,9 @@ const App = (): JSX.Element => {
         await czs_engine.clearDrawingAsync();
     }
 
-    async function handleExtractFeatures(email: string) {
+    async function handleExtractFeatures(email: string, out_crs?: number) {
         // Extract features
-        await czs_engine.extractFeaturesAsync(email);
+        await czs_engine.extractFeaturesAsync(email, out_crs);
     }
 
     async function handleZoomToCollection(collection: PyGeoAPICollectionsCollectionResponsePayload) {
@@ -64,9 +64,9 @@ const App = (): JSX.Element => {
         await czs_engine.layerOrderLowerAsync(coll_type, coll_id);
     }
 
-    async function handleCollectionCheckedChanged(value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]) {
+    async function handleCollectionCheckedChanged(parentColl: ParentCollections, value: string, checked: boolean, checkedColls: string[]) {
         // Update the checked list of collections
-        await czs_engine.updateCollectionCheckedAsync(value, checked, parentColl, checkedColls);
+        await czs_engine.updateCollectionCheckedAsync(parentColl, value, checked, checkedColls);
     }
 
     useEffect(() => {
@@ -107,7 +107,7 @@ const App = (): JSX.Element => {
                 };
 
                 // Call an api function to add a panel with a button in the default group
-                cgpv.api.map(MAP_ID).appBarButtons.createAppbarPanel(button, panel, null);
+                cgpv.api.maps[MAP_ID].appBarButtons.createAppbarPanel(button, panel, null);
             });
         }
 

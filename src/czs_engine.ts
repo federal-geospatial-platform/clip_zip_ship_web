@@ -56,7 +56,7 @@ export default class CZSEngine {
 
         // Get the map
         this._mapID = mapID;
-        this._map = this._cgpvapi.map(mapID);
+        this._map = this._cgpvapi.maps[mapID];
         this._lang = language;
 
         // Get the map limits in current map projection
@@ -85,7 +85,7 @@ export default class CZSEngine {
 
                 // Init modify interaction
                 this._modifInter = this._map.initModifyInteractions(CZSEngine.GEOM_GRP_DRAW_ID);
-                //const transInter = cgpv.api.map(this._mapID).initTranslateInteractions();
+                //const transInter = cgpv.api.maps[this._mapID].initTranslateInteractions();
 
                 // Load the collections off the bat
                 let loaded: boolean = await this.loadCollectionsAsync();
@@ -204,7 +204,7 @@ export default class CZSEngine {
         return await this.loadCollectionsAsync(geom);
     }
 
-    updateCollectionCheckedAsync = async (value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]): Promise<boolean> => {
+    updateCollectionCheckedAsync = async (parentColl: ParentCollections, value: string, checked: boolean, checkedColls: string[]): Promise<boolean> => {
         try {
             // Find the collection information for that collection id
             let coll_info = this.findCollectionFromID(value);
@@ -278,10 +278,10 @@ export default class CZSEngine {
         });
     }
 
-    extractFeaturesAsync = async (email: string): Promise<any> => {
+    extractFeaturesAsync = async (email: string, out_crs?: number): Promise<any> => {
         try {
             // Proceed
-            let res: PyGeoAPIJobIDResponsePayload = await CZSServices.extractFeaturesAsync(Object.keys(this._viewedCollections), email, this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection)
+            let res: PyGeoAPIJobIDResponsePayload = await CZSServices.extractFeaturesAsync(Object.keys(this._viewedCollections), email, this._cgpvapi.geoUtilities.geometryToWKT(this._geometry), this._map.currentProjection, out_crs)
             console.log("JOB RESULT", res);
 
             // Job started

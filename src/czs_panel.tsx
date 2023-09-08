@@ -20,13 +20,13 @@ import ImageArrowDown from './assets/images/arrow_down.png';
 interface CZSPanelProps {
     handleStartDrawing: () => void;
     handleClearDrawing: () => void;
-    handleExtractFeatures: (email: string) => void;
+    handleExtractFeatures: (email: string, out_crs?: number) => void;
     handleZoomToCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
     handleViewMetadataCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
     handleViewCapabilitiesCollection: (collection: PyGeoAPICollectionsCollectionResponsePayload) => void;
     handleHigher: (coll_type: string, coll_id: string) => void;
     handleLower: (coll_type: string, coll_id: string) => void;
-    handleCollectionCheckedChanged: (value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]) => void;
+    handleCollectionCheckedChanged: (parentColl: ParentCollections, value: string, checked: boolean, checkedColls: string[]) => void;
 }
 
 /**
@@ -56,7 +56,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     const [contextMenuCollection, setContextMenuCollection] = useState(null);
-    const [email, _setEmail] = useState("alexandre.roy@nrcan-rncan.gc.ca");
+    const [email, _setEmail] = useState(CZSUtils.isLocal() ? "alexandre.roy@nrcan-rncan.gc.ca" : null);
     const [isLoading, _setIsLoading] = useState(false);
     const [isLoadingFeatures, _setIsLoadingFeatures] = useState(false);
     const [isOrderLoading, _setIsOrderLoading] = useState([]);
@@ -270,7 +270,8 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     }
 
     function handleExtractFeatures() {
-        props.handleExtractFeatures?.(email);
+        const txtOutCrs: typeof TextField = document.getElementById('czs_out_crs');
+        props.handleExtractFeatures?.(email, parseInt(txtOutCrs.value));
     }
 
     function handleMenuMore(e: any, coll: PyGeoAPICollectionsCollectionResponsePayload) {
@@ -304,8 +305,8 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         props.handleLower?.(coll_type, coll_id);
     }
 
-    function handleCollectionCheckedChanged(value: string, checked: boolean, parentColl: ParentCollections, checkedColls: string[]) {
-        props.handleCollectionCheckedChanged?.(value, checked, parentColl, checkedColls);
+    function handleCollectionCheckedChanged(parentColl: ParentCollections, value: string, checked: boolean, checkedColls: string[]) {
+        props.handleCollectionCheckedChanged?.(parentColl, value, checked, checkedColls);
     }
 
     function handleEmailChange(): void {
@@ -366,7 +367,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                     };
                 })}
                 checkedValues={checkedCollections || []}
-                checkedCallback={(value: string, checked: boolean, allChecked: string[]) => handleCollectionCheckedChanged(value, checked, parColl, allChecked)}
+                checkedCallback={(value: string, checked: boolean, allChecked: string[]) => handleCollectionCheckedChanged(parColl, value, checked, allChecked)}
             ></CheckboxListEnhanced>;
         }
 
@@ -461,14 +462,16 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
             <div>
                 <Button
                     type="text"
+                    tooltip={t('czs.draw_tooltip')}
                     onClick={ handleStartDrawing }
                     size="small"
                 >{ t('czs.draw') }</Button>
                 <Button
-                type="text"
-                onClick={ handleClearDrawing }
-                size="small"
-                disabled={ !clearButtonState.active }
+                    type="text"
+                    tooltip={t('czs.clear_tooltip')}
+                    onClick={ handleClearDrawing }
+                    size="small"
+                    disabled={ !clearButtonState.active }
                 >{ t('czs.clear') }</Button>
             </div>
             <div className='loading-spinner-container'>
@@ -500,19 +503,36 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                 ></Accordion>
             </div>
 
-            <TextField
-                id="czs_email"
-                className="czs-email"
-                type="email"
-                placeholder={t('czs.enter_email')}
-                style={{ marginTop: 20, width: '100%' }}
-                onChange={ handleEmailChange }
-                value={email}
-            ></TextField>
+            <div style={{ marginTop: 20 }}>
+                <div title={t('czs.email_tooltip')} aria-label={t('czs.email_tooltip')}>Email:</div>
+                <TextField
+                    id="czs_email"
+                    className="czs-email"
+                    type="email"
+                    tooltip={t('czs.email_tooltip')}
+                    placeholder={t('czs.enter_email')}
+                    style={{ width: '100%' }}
+                    onChange={ handleEmailChange }
+                    value={email}
+                ></TextField>
+            </div>
+
+            <div style={{ marginTop: 20 }}>
+                <div title={t('czs.projection_tooltip')} aria-label={t('czs.projection_tooltip')}>EPSG projection:</div>
+                <TextField
+                    id="czs_out_crs"
+                    className="czs-out_crs"
+                    type="number"
+                    tooltip={t('czs.projection_tooltip')}
+                    //placeholder={3978}
+                    style={{ width: '100%' }}
+                ></TextField>
+            </div>
 
             <Button
                 className="btn-extract"
                 type="text"
+                tooltip={t('czs.extract_tooltip')}
                 onClick={ handleExtractFeatures }
                 size="small"
                 disabled={ !(!!Object.keys(viewedCollections).length && email && !isExtracting) }
@@ -526,6 +546,15 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
                     {
                         title: t('czs.help_title'),
                         content: <div className="help-text" dangerouslySetInnerHTML={{ __html: t('czs.help_text') }}></div>
+                    }
+                ]}
+            ></Accordion>
+            <Accordion
+                className="feedback-help"
+                items={[
+                    {
+                        title: t('czs.feedback_title'),
+                        content: <div className="feedback-text" dangerouslySetInnerHTML={{ __html: t('czs.feedback_text') }}></div>
                     }
                 ]}
             ></Accordion>

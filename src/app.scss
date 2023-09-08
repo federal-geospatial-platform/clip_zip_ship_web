@@ -27,6 +27,20 @@
   background-color: #005fcb52;
 }
 
+.MuiButton-root {
+  border: 1px solid;
+  margin: 20px 0px;
+  padding: 0px;
+}
+
+.MuiPaper-root.MuiMenu-paper {
+  background-color: #a1cdff;
+}
+
+.SnackbarItem-contentRoot:not(.SnackbarItem-variantError):not(.SnackbarItem-variantWarning):not(.SnackbarItem-variantInfo):not(.SnackbarItem-variantSuccess) {
+  background-color: #e4b152 !important;
+}
+
 .czs-panel .MuiListItem-root,
 .czs-panel .MuiListItem-root:hover,
 .MuiMenuItem-root.MuiMenuItem-gutters {
@@ -52,20 +66,12 @@
   color: rgba(0, 95, 203, 0.666);
 }
 
-.SnackbarItem-contentRoot:not(.SnackbarItem-variantError):not(.SnackbarItem-variantWarning):not(.SnackbarItem-variantInfo):not(.SnackbarItem-variantSuccess) {
-  background-color: #e4b152 !important;
-}
-
 .layer-order-layers.loading {
   cursor: default;
   opacity: 0.4;
 }
 .layer-order-layers.loading a {
   pointer-events: none;
-}
-
-.MuiPaper-root.MuiMenu-paper {
-  background-color: #a1cdff;
 }
 
 .layer-options-wrapper {
@@ -86,10 +92,6 @@
   width: 20px;
   vertical-align: middle;
   margin: 0px 5px 0px 5px;
-}
-
-.need-help {
-  background-color: #e4b152;
 }
 
 .czs-jobs {
@@ -141,16 +143,19 @@
   text-decoration: none;
 }
 
-.czs-email input {
+.czs-email input,
+.czs-out_crs input {
   padding: 10px 10px;
   font-size: 1rem;
 }
 
-.btn-extract {
-  margin: 20px 0px;
+.need-help,
+.feedback-help {
+  background-color: #e4b152;
 }
 
-.help-text {
+.help-text,
+.feedback-text {
   font-size: smaller;
   padding: 0px 10px;
 }

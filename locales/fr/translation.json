@@ -6,7 +6,7 @@
     "list_coverage_colls": "Liste des collections matricielles",
     "enter_email": "Entrer votre adresse courriel",
     "extract_features": "Extraire les données",
-    "help_title":"Besoin d'aide?",
+
     "layer_options": "Options...",
     "zoom_to":"Cadrer la carte",
     "view_capabilities":"Visualiser les capacités",
@@ -18,6 +18,14 @@
     "warning_extraction_area_too_big": "Zone d'extraction trop grande pour la collection",
     "warning_extraction_area_missing": "Zone d'extraction manquante, seulement les empreintes des données sont affichés",
     "error_some_elements_outside": "Certains éléments sont en dehors de l'étendu cartographique.",
-    "help_text":"Bonjour,<br/>Pour soumettre votre demande d'extraction de données dynamique, il suffit de remplir les 3 conditions suivantes dans l'ordre que vous désirez:<ol><li>Sélectionner une ou plusieurs collections</li><li>Tracer un polygone de découpage sur la carte</li><li>Entrer votre adresse courriel</li></ol><br/>Pour de l'aide supplémentaire, contactez: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>EMAIL</a>"
+    "help_title":"Besoin d'aide?",
+    "help_text":"Bonjour,<br/>Pour soumettre votre demande d'extraction de données dynamique, il suffit de remplir les 3 conditions suivantes dans l'ordre que vous désirez:<ol><li>Sélectionner une ou plusieurs collections</li><li>Tracer un polygone de découpage sur la carte</li><li>Entrer votre adresse courriel</li><li>Optionnellement, spécifiez un EPSG</li></ol>",
+    "feedback_title": "Envoyez-nous vos commentaires/questions",
+    "feedback_text": "Vous voulez contribuer et nous fournir votre rétro-action?<br/><br/>Contactez-nous: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca</a>",
+    "email_tooltip": "Inscrivez le courriel où recevoir votre lien de téléchargement pour votre extraction",
+    "projection_tooltip": "Optionallement, spécifiez un numéro EPSG pour les données extraites",
+    "draw_tooltip": "Cliquez pour dessiner une aire d'extraction sur la carte",
+    "clear_tooltip": "Cliquez pour supprimer le dessin sur la carte",
+    "extract_tooltip": "Cliquez pour démarrer l'extraction des données"
   }
 }

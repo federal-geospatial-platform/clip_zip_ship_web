@@ -71,6 +71,18 @@ export type PyGeoAPIRecordsDataResponsePayload = {
     type: string;
 };
 
+export type PyGeoAPIJobIDQueryPayload = {
+    inputs: PyGeoAPIJobIDQueryInputPayload;
+}
+
+export type PyGeoAPIJobIDQueryInputPayload = {
+    geom: string;
+    geom_crs: number;
+    collections: string[];
+    email: string;
+    out_crs?: number;
+}
+
 export type PyGeoAPIJobIDResponsePayload = {
     job_id: string;
 }

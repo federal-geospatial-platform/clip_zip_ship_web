@@ -3,6 +3,7 @@ import {
     PyGeoAPICollectionsCollectionResponsePayload,
     PyGeoAPIRecordsResponsePayload,
     PyGeoAPIRecordsDataResponsePayload,
+    PyGeoAPIJobIDQueryPayload,
     PyGeoAPIJobIDResponsePayload,
     PyGeoAPIJobStatusResponsePayload,
     PyGeoAPIJobResultResponsePayload
@@ -49,22 +50,26 @@ export default class CZSServices {
         return promise;
     };
 
-    static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number): Promise<PyGeoAPIJobIDResponsePayload> => {
+    static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number, out_crs?: number): Promise<PyGeoAPIJobIDResponsePayload> => {
         let promise = new Promise<PyGeoAPIJobIDResponsePayload>((resolve, reject) => {
+            let inputs : PyGeoAPIJobIDQueryPayload = {
+                'inputs': {
+                    'geom': geom_wkt,
+                    'geom_crs': crs,
+                    'collections': collections,
+                    'email': email
+                }
+            };
+            if (out_crs)
+                inputs['inputs']['out_crs'] = out_crs;
+
             fetch(CZSUtils.getPygeoapiHost() + "/processes/extract/execution", {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json'
                 },
                 method: "POST",
-                body: JSON.stringify({
-                    'inputs': {
-                        'geom': geom_wkt,
-                        'geom_crs': crs,
-                        'collections': collections,
-                        'email': email
-                    }
-                })
+                body: JSON.stringify(inputs)
             }).then((response) => {
                 // Only process valid response
                 if (response.status === 200 || response.status === 201) {

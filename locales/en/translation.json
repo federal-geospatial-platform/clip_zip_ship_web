@@ -6,7 +6,6 @@
     "list_coverage_colls": "List of raster collections",
     "enter_email": "Enter your email",
     "extract_features": "Extract data",
-    "help_title": "Need help?",
     "layer_options": "Options...",
     "zoom_to": "Zoom To",
     "view_capabilities": "View Capabilities",
@@ -18,6 +17,14 @@
     "warning_extraction_area_too_big": "Extraction area too big for collection",
     "warning_extraction_area_missing": "Missing an extraction area, only showing the data footprints",
     "error_some_elements_outside": "Some elements were outside map extent limits.",
-    "help_text": "Hi,<br/>To submit your dynamic data extraction request, you must meet the following 3 criterias in the order of your choice:<ol><li>Select one or many collections</li><li>Draw an extraction polygon on the map</li><li>Type in your email address</li></ol><br/>For further assistance, contact: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>EMAIL</a>"
+    "help_title": "Need help?",
+    "help_text": "Hi,<br/>To submit your dynamic data extraction request, you must meet the following 3 criterias in the order of your choice:<ol><li>Select one or many collections</li><li>Draw an extraction polygon on the map</li><li>Type in your email address</li><li>Optionnally, specify an EPSG</li></ol>",
+    "feedback_title": "Send us your comments/questions",
+    "feedback_text": "You want to contribute and provide feedback?<br/><br/>Contact us: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca</a>",
+    "email_tooltip": "Enter the email on which to receive your download package link",
+    "projection_tooltip": "Optionally, specify an EPSG number for the extracted data",
+    "draw_tooltip": "Click to draw an extraction area on the map",
+    "clear_tooltip": "Click to clear the drawing from the map",
+    "extract_tooltip": "Click to start the extraction process"
   }
 }

@@ -75,7 +75,7 @@ export default class CZSEngine {
             this._cgpvapi.eventNames.MAP.EVENT_MAP_LOADED,
             async (payload: any) => {
                 // Create geometry group which will handle the drawing
-                const geomGrp = this._map.layer.vector.createGeometryGroup(CZSEngine.GEOM_GRP_DRAW_ID);
+                const geomGrp = this._map.layer.geometry?.createGeometryGroup(CZSEngine.GEOM_GRP_DRAW_ID);
 
                 // Set the default styling for the vector layer
                 geomGrp.vectorLayer.setStyle(this._cgpvapi.geoUtilities.defaultDrawingStyle('orange'));
@@ -160,7 +160,7 @@ export default class CZSEngine {
 
     startDrawing = (): void => {
         // Clear current drawing
-        this._map.layer.vector.deleteGeometriesFromGroup(CZSEngine.GEOM_GRP_DRAW_ID);
+        this._map.layer.geometry?.deleteGeometriesFromGroup(CZSEngine.GEOM_GRP_DRAW_ID);
 
         // Init drawing interaction
         this._drawInter = this._map.initDrawInteractions(CZSEngine.GEOM_GRP_DRAW_ID, "Polygon");
@@ -168,7 +168,7 @@ export default class CZSEngine {
 
     clearDrawingAsync = async (): Promise<boolean> => {
         // Clear current drawing
-        this._map.layer.vector.deleteGeometriesFromGroup(CZSEngine.GEOM_GRP_DRAW_ID);
+        this._map.layer.geometry?.deleteGeometriesFromGroup(CZSEngine.GEOM_GRP_DRAW_ID);
         // Stop drawing if currently drawing
         this.onStopDrawing();
         // Reload the collections from scratch
@@ -331,7 +331,7 @@ export default class CZSEngine {
         // Depending on the kind of layer
         if (coll_type == "feature") {
             // Get the geometry group vector layer
-            let vLayer = this._map.layer.vector.getGeometryGroup(collection_id).vectorLayer;
+            let vLayer = this._map.layer.geometry?.getGeometryGroup(collection_id).vectorLayer;
             let zindex = vLayer.getZIndex();
             zindex++;
             vLayer.setZIndex(zindex);
@@ -352,7 +352,7 @@ export default class CZSEngine {
         // Depending on the kind of layer
         if (coll_type == "feature") {
             // Get the geometry group vector layer
-            let vLayer = this._map.layer.vector.getGeometryGroup(collection_id).vectorLayer;
+            let vLayer = this._map.layer.geometry?.getGeometryGroup(collection_id).vectorLayer;
             let zindex = vLayer.getZIndex();
             zindex--;
             vLayer.setZIndex(zindex);
@@ -628,13 +628,13 @@ export default class CZSEngine {
         //console.log("Records", coll_res);
         if (coll_res.data.features && coll_res.data.features.length > 0) {
             // Create geometry group which will handle the records results
-            const geomGrpRes = this._map.layer.vector.createGeometryGroup(coll_info.id);
+            const geomGrpRes = this._map.layer.geometry?.createGeometryGroup(coll_info.id);
 
             // Set the zindex
             geomGrpRes.vectorLayer.setZIndex(CZSEngine.Z_INDEX_VECTORS)
 
             // Set the active geometry group
-            this._map.layer.vector.setActiveGeometryGroup(coll_info.id);
+            this._map.layer.geometry?.setActiveGeometryGroup(coll_info.id);
 
             // Keep track
             this._viewedCollections[coll_info.id] = {
@@ -730,13 +730,13 @@ export default class CZSEngine {
         let coll: PyGeoAPICollectionsCollectionResponsePayload = await CZSServices.getCollectionWKTAsync(coll_info);
 
         // Create geometry group which will handle the records results
-        const geomGrpRes = this._map.layer.vector.createGeometryGroup(coll_info.id);
+        const geomGrpRes = this._map.layer.geometry?.createGeometryGroup(coll_info.id);
 
         // Set the zindex
         geomGrpRes.vectorLayer.setZIndex(CZSEngine.Z_INDEX_VECTORS)
 
         // Set the active geometry group
-        this._map.layer.vector.setActiveGeometryGroup(coll_info.id);
+        this._map.layer.geometry?.setActiveGeometryGroup(coll_info.id);
 
         // Load the features in the group
         this.loadFeaturesInGroup([coll.wkt], CZSEngine.COLLECTION_FOOTPRINT_CRS, "red", "red");
@@ -744,8 +744,8 @@ export default class CZSEngine {
 
     removeCollection = (collection_id: string) => {
         // Delete the collection when it's part of a geometry group
-        if (this._map.layer.vector.getGeometryGroup(collection_id))
-            this._map.layer.vector.deleteGeometryGroup(collection_id);
+        if (this._map.layer.geometry?.getGeometryGroup(collection_id))
+            this._map.layer.geometry?.deleteGeometryGroup(collection_id);
 
         // If the collection is viewable
         if (this._viewedCollections.hasOwnProperty(collection_id)) {
@@ -775,20 +775,20 @@ export default class CZSEngine {
             // Depending on the geometry type
             if (geometry.getType() == "LineString") {
                 // Add geometry to feature collection
-                this._map.layer.vector.addPolyline(geometry.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 0.5, strokeWidth: 1 } });
+                this._map.layer.geometry?.addPolyline(geometry.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 0.5, strokeWidth: 1 } });
             }
 
             else if (geometry.getType() == "MultiLineString") {
                 // For each line
                 geometry.getLineStrings().forEach((line: any) => {
                     // Add geometry to feature collection
-                    this._map.layer.vector.addPolyline(line.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
+                    this._map.layer.geometry?.addPolyline(line.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
                 });
             }
 
             else if (geometry.getType() == "Point") {
                 // Add geometry to feature collection
-                this._map.layer.vector.addMarkerIcon(geometry.getCoordinates(), {
+                this._map.layer.geometry?.addMarkerIcon(geometry.getCoordinates(), {
                     projection: crs,
                     style: {
                         anchor: [0.5, 256],
@@ -805,7 +805,7 @@ export default class CZSEngine {
                 // For each point
                 geometry.getPoints().forEach((point: any) => {
                    // Add geometry to feature collection
-                    this._map.layer.vector.addMarkerIcon(point.getCoordinates(), {
+                    this._map.layer.geometry?.addMarkerIcon(point.getCoordinates(), {
                         projection: crs,
                         style: {
                             anchor: [0.5, 256],
@@ -821,14 +821,14 @@ export default class CZSEngine {
 
             else if (geometry.getType() == "Polygon") {
                 // Add geometry to feature collection
-                this._map.layer.vector.addPolygon(geometry.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
+                this._map.layer.geometry?.addPolygon(geometry.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
             }
 
             else if (geometry.getType() == "MultiPolygon") {
                 // For each polygon
                 geometry.getPolygons().forEach((poly: any) => {
                     // Add geometry to feature collection
-                    this._map.layer.vector.addPolygon(poly.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
+                    this._map.layer.geometry?.addPolygon(poly.getCoordinates(), { projection: crs, style: { strokeColor: color, strokeOpacity: 1, strokeWidth: 1, fillColor: color, fillOpacity: 0.05 } });
                 });
             }
 
@@ -849,25 +849,25 @@ export default class CZSEngine {
 
                     // For each line segment
                     rec.geometry_clipped.coordinates.forEach((coords: number[]) => {
-                        this._map.layer.vector.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5 } });
+                        this._map.layer.geometry?.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5 } });
                     });
                 }
 
                 else if (rec.geometry_clipped.type == "MultiLineString") {
                     // For each line
                     rec.geometry_clipped.coordinates.forEach((coords: number[][]) => {
-                        this._map.layer.vector.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
+                        this._map.layer.geometry?.addPolyline(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
                     });
                 }
 
                 else if (rec.geometry_clipped.type == "Polygon") {
-                    this._map.layer.vector.addPolygon(rec.geometry_clipped.coordinates, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
+                    this._map.layer.geometry?.addPolygon(rec.geometry_clipped.coordinates, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
                 }
 
                 else if (rec.geometry_clipped.type == "MultiPolygon") {
                     // For each polygon
                     rec.geometry_clipped.coordinates.forEach((coords: number[][]) => {
-                        this._map.layer.vector.addPolygon(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
+                        this._map.layer.geometry?.addPolygon(coords, { projection: crs, style: { strokeColor: colorClip, strokeWidth: 1.5, fillColor: colorClip, fillOpacity: 0.3 } });
                     });
                 }
 

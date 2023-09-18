@@ -91,7 +91,7 @@ const App = (): JSX.Element => {
                 // Panel
                 const panel = {
                     panelId: 'CZSPanelID',
-                    title: 'Clip Zip Ship',
+                    title: 'Clip Zip Ship v0.2.1',
                     content: cgpv.react.createElement(CZSPanel, {
                         handleStartDrawing,
                         handleClearDrawing,

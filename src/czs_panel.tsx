@@ -62,26 +62,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
     const [isOrderLoading, _setIsOrderLoading] = useState([]);
     const [isExtracting, _setIsExtracting] = useState(false);
 
-    // // Style the container
-    // const useStyles = makeStyles((theme: any) => ({
-    //     positionContainer: {
-    //         marginLeft: 75,
-    //         backgroundColor: '#fff',
-    //         padding: 10,
-    //         height: '100%',
-    //         'min-width': 600,
-    //         overflow: 'auto',
-    //         pointerEvents: 'initial',
-    //     },
-    //     listCollections: {
-    //         'padding-inline-start': 0,
-    //     }
-    // }));
-
-    // Get the classes for the styles
-    //const defaultTheme = useTheme();
-    //const classes = useStyles();
-
+    // Effect hook to add and remove event listeners
     useEffect(() => {
         // Add CZS translations file
         i18n.addResourceBundle("en", "translation", T_EN);
@@ -242,6 +223,7 @@ const CZSPanel = (props: CZSPanelProps): JSX.Element => {
         );
 
         return () => {
+            // Unwire handlers
             api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_STARTED, MAP_ID);
             api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_FEATURES, MAP_ID);
             api.event.off(CZS_EVENT_NAMES.ENGINE_LOAD_COLLECTIONS_COVERAGES, MAP_ID);

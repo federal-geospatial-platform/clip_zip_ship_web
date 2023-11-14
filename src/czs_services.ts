@@ -1,312 +1,207 @@
+/* eslint-disable no-console */
 import {
-    PyGeoAPICollectionsResponsePayload,
-    PyGeoAPICollectionsCollectionResponsePayload,
-    PyGeoAPIRecordsResponsePayload,
-    PyGeoAPIRecordsDataResponsePayload,
-    PyGeoAPIJobIDQueryPayload,
-    PyGeoAPIJobIDResponsePayload,
-    PyGeoAPIJobStatusResponsePayload,
-    PyGeoAPIJobResultResponsePayload
-} from './czs_types';
-import CZSUtils from './czs_utils';
+  PyGeoAPICollectionsCollectionResponsePayload,
+  PyGeoAPIRecordsResponsePayload,
+  PyGeoAPIRecordsDataResponsePayload,
+  PyGeoAPIJobIDQueryPayload,
+  PyGeoAPIJobIDResponsePayload,
+  PyGeoAPIJobStatusResponsePayload,
+  PyGeoAPIJobResultResponsePayload,
+} from './czs-types';
+import CZSUtils from './czs-utils';
 
 export default class CZSServices {
+  static getCollectionsPOSTAsync = async (
+    lang: string,
+    geomWkt: string,
+    crs: number,
+  ): Promise<PyGeoAPICollectionsCollectionResponsePayload[]> => {
+    try {
+      // Fetch
+      const response = await fetch(`${CZSUtils.getPygeoapiHost()}/collections?f=json&lang=${lang}`, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify({
+          geom: geomWkt,
+          'geom-crs': crs,
+        }),
+      });
 
-    static getCollectionsPOSTAsync = async (lang: string, geom_wkt: string, crs: number): Promise<PyGeoAPICollectionsCollectionResponsePayload[]> => {
-        let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload[]>((resolve, reject) => {
-            fetch(CZSUtils.getPygeoapiHost() + "/collections?f=json&lang=" + lang, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: "POST",
-                body: JSON.stringify({
-                    "geom": geom_wkt,
-                    "geom-crs": crs
-                })
-            }).then((response) => {
-                // Only process valid response
-                if (response.status === 200) {
-                    response.json().then((data: PyGeoAPICollectionsResponsePayload) => {
-                        // Resolve
-                        resolve(data.collections);
-                    }).catch((err) => {
-                        console.log(err);
-                        reject("Invalid response returned by the server.");
-                    });
-                }
+      // Only process valid response
+      if (response.status === 200) {
+        return (await response.json()).collections;
+      }
 
-                else {
-                    console.log("Invalid status: " + response.status);
-                    reject("The server couldn't provide the collections list.");
-                }
-            }).catch((error) => {
-                console.log(error);
-                reject("Failed to communicate with the server to retrieve the collections.");
-            });
-        });
+      console.log(`Invalid status: ${response.status}`);
+      throw Error("The server couldn't provide the collections list.");
+    } catch (err) {
+      console.error(err);
+      throw Error('Failed to communicate with the server to retrieve the collections.');
+    }
+  };
 
-        // Return the promise
-        return promise;
-    };
+  static extractFeaturesAsync = async (
+    collections: string[],
+    email: string,
+    geomWkt: string,
+    crs: number,
+    outCrs?: number,
+  ): Promise<PyGeoAPIJobIDResponsePayload> => {
+    try {
+      const inputs: PyGeoAPIJobIDQueryPayload = {
+        inputs: {
+          geom: geomWkt,
+          geom_crs: crs,
+          collections,
+          email,
+        },
+      };
+      if (outCrs) inputs.inputs.out_crs = outCrs;
 
-    static extractFeaturesAsync = async (collections: string[], email: string, geom_wkt: any, crs: number, out_crs?: number): Promise<PyGeoAPIJobIDResponsePayload> => {
-        let promise = new Promise<PyGeoAPIJobIDResponsePayload>((resolve, reject) => {
-            let inputs : PyGeoAPIJobIDQueryPayload = {
-                'inputs': {
-                    'geom': geom_wkt,
-                    'geom_crs': crs,
-                    'collections': collections,
-                    'email': email
-                }
-            };
-            if (out_crs)
-                inputs['inputs']['out_crs'] = out_crs;
+      const response = await fetch(`${CZSUtils.getPygeoapiHost()}/processes/extract/execution`, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+        body: JSON.stringify(inputs),
+      });
 
-            fetch(CZSUtils.getPygeoapiHost() + "/processes/extract/execution", {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: "POST",
-                body: JSON.stringify(inputs)
-            }).then((response) => {
-                // Only process valid response
-                if (response.status === 200 || response.status === 201) {
-                    response.json().then((data: any) => {
-                        // Resolve
-                        resolve(data);
-                    }).catch((err) => {
-                        console.log(err);
-                        reject("Invalid response returned by the server.");
-                    });
-                }
+      // Only process valid response
+      if (response.status === 200 || response.status === 201) {
+        return await response.json();
+      }
 
-                else {
-                    // If too large (413)
-                    if (response.status == 412) {
-                        reject("Please draw an extraction area.");
-                    }
+      // Depending on the status
+      if (response.status === 412) {
+        throw Error('Please draw an extraction area.');
+      } else if (response.status === 413) {
+        throw Error('Your extraction area is too big.');
+      } else {
+        console.log(`Invalid status: ${response.status}`);
+        throw Error("The server couldn't extract the data.");
+      }
+    } catch (err) {
+      console.error(err);
+      throw Error('Failed to communicate with the server to extract the data.');
+    }
+  };
 
-                    else if (response.status == 413) {
-                        reject("Your extraction area is too big.");
-                    }
+  static getJobStatusAsync = async (jobId: string): Promise<PyGeoAPIJobStatusResponsePayload> => {
+    const url = `${CZSUtils.getPygeoapiHost()}/jobs/{jobId}?j=json`.replace('{jobId}', jobId);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        method: 'GET',
+      });
 
-                    else {
-                        console.log("Invalid status: " + response.status);
-                        reject("The server couldn't extract the data.");
-                    }
-                }
-            }).catch((error) => {
-                console.log(error);
-                reject("Failed to communicate with the server to extract the data.");
-            });
-        });
+      // Only process valid response
+      if (response.status === 200) {
+        return await response.json();
+      }
 
-        // Return the promise
-        return promise;
-    };
+      console.log(`Invalid status: ${response.status}`);
+      throw Error("The server couldn't get the job status.");
+    } catch (err) {
+      console.error(err);
+      throw Error('Failed to communicate with the server to check the job status.');
+    }
+  };
 
-    static getJobStatusAsync = async (jobId: string): Promise<PyGeoAPIJobStatusResponsePayload> => {
-        let url = (CZSUtils.getPygeoapiHost() + "/jobs/{jobId}?j=json").replace("{jobId}", jobId);
-        let promise = new Promise<PyGeoAPIJobStatusResponsePayload>((resolve, reject) => {
-            fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: "GET"
-            }).then((response) => {
-                // Only process valid response
-                if (response.status === 200) {
-                    response.json().then((data: any) => {
-                        // Resolve
-                        resolve(data);
-                    }).catch((err) => {
-                        console.log(err);
-                        reject("Invalid response returned by the server.");
-                    });
-                }
+  static getJobResultAsync = async (jobId: string): Promise<PyGeoAPIJobResultResponsePayload> => {
+    const url = `${CZSUtils.getPygeoapiHost()}/jobs/{jobId}/results?j=json`.replace('{jobId}', jobId);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        method: 'GET',
+      });
 
-                else {
-                    console.log("Invalid status: " + response.status);
-                    reject("The server couldn't get the job status.");
-                }
-            }).catch((error) => {
-                console.log(error);
-                reject("Failed to communicate with the server to check the job status.");
-            });
-        });
+      // Only process valid response
+      if (response.status === 200) {
+        return await response.json();
+      }
 
-        // Return the promise
-        return promise;
-    };
+      console.log(`Invalid status: ${response.status}`);
+      throw Error("The server couldn't get the job results.");
+    } catch (err) {
+      console.error(err);
+      throw Error('Failed to communicate with the server to check the job results.');
+    }
+  };
 
-    static getJobResultAsync = async (jobId: string): Promise<PyGeoAPIJobResultResponsePayload> => {
-        let url = (CZSUtils.getPygeoapiHost() + "/jobs/{jobId}/results?j=json").replace("{jobId}", jobId);
-        let promise = new Promise<PyGeoAPIJobResultResponsePayload>((resolve, reject) => {
-            fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: "GET"
-            }).then((response) => {
-                // Only process valid response
-                if (response.status === 200) {
-                    response.json().then((data: any) => {
-                        // Resolve
-                        resolve(data);
-                    }).catch((err) => {
-                        console.log(err);
-                        reject("Invalid response returned by the server.");
-                    });
-                }
+  static getFeaturesAsync = async (
+    collection: PyGeoAPICollectionsCollectionResponsePayload,
+    geomWkt: string,
+    crs: number,
+  ): Promise<PyGeoAPIRecordsResponsePayload> => {
+    let url = `${CZSUtils.getPygeoapiHost()}/collections/{collectionId}/items?f=json`.replace('{collectionId}', collection.id);
+    if (geomWkt) url += `&geom=${geomWkt}&geom-crs=${crs}&clip=2`;
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        method: 'GET',
+      });
 
-                else {
-                    console.log("Invalid status: " + response.status);
-                    reject("The server couldn't get the job status.");
-                }
-            }).catch((error) => {
-                console.log(error);
-                reject("Failed to communicate with the server to check the job status.");
-            });
-        });
+      // Only process valid response
+      if (response.status === 200) {
+        const respJson: PyGeoAPIRecordsDataResponsePayload = await response.json();
+        return {
+          collection,
+          data: respJson,
+        };
+      }
 
-        // Return the promise
-        return promise;
-    };
+      // If too large (413)
+      // eslint-disable-next-line no-lonely-if
+      if (response.status === 412) {
+        throw Error('Please draw an extraction area.');
+      } else if (response.status === 413) {
+        throw Error('Your extraction area is too big.');
+      } else {
+        console.log(`Invalid status: ${response.status}`);
+        throw Error("The server couldn't extract the data.");
+      }
+    } catch (err) {
+      console.log(err);
+      throw Error(`Failed to communicate with the server to fetch features for collection: ${collection.title}`);
+    }
+  };
 
-    static getFeaturesAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number): Promise<PyGeoAPIRecordsResponsePayload> => {
-        let url = (CZSUtils.getPygeoapiHost() + "/collections/{collectionId}/items?f=json").replace("{collectionId}", collection.id);
-        if (geom_wkt)
-            url += "&geom=" + geom_wkt + "&geom-crs=" + crs + "&clip=2";
-        let promise = new Promise<PyGeoAPIRecordsResponsePayload>((resolve, reject) => {
-            fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: "GET"
-            }).then((response) => {
-                // Only process valid response
-                if (response.status === 200) {
-                    response.json().then((data: PyGeoAPIRecordsDataResponsePayload) => {
-                        // Resolve
-                        resolve({
-                            collection: collection,
-                            data: data
-                        });
-                    }).catch((err) => {
-                        console.log(err);
-                        reject("Invalid response returned by the server.");
-                    });
-                }
+  static getCollectionWKTAsync = async (
+    collection: PyGeoAPICollectionsCollectionResponsePayload,
+  ): Promise<PyGeoAPICollectionsCollectionResponsePayload> => {
+    const url = `${CZSUtils.getPygeoapiHost()}/collections/{collectionId}?f=json`.replace('{collectionId}', collection.id);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        method: 'GET',
+      });
 
-                else {
-                    // If too large (413)
-                    if (response.status == 412) {
-                        reject("Please draw an extraction area.");
-                    }
+      // Only process valid response
+      if (response.status === 200) {
+        return await response.json();
+      }
 
-                    else if (response.status == 413) {
-                        reject("Your extraction area is too big.");
-                    }
-
-                    else {
-                        console.log("Invalid status: " + response.status);
-                        reject("The server couldn't extract the data.");
-                    }
-                }
-            }).catch((error) => {
-                console.log(error);
-                reject("Failed to communicate with the server to fetch features for collection: " + collection.title);
-            });
-        });
-
-        // Return the promise
-        return promise;
-    };
-
-    static getCollectionWKTAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload): Promise<PyGeoAPICollectionsCollectionResponsePayload> => {
-        let url = (CZSUtils.getPygeoapiHost() + "/collections/{collectionId}?f=json").replace("{collectionId}", collection.id);
-        let promise = new Promise<PyGeoAPICollectionsCollectionResponsePayload>((resolve, reject) => {
-            fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                method: "GET"
-            }).then((response) => {
-                // Only process valid response
-                if (response.status === 200) {
-                    response.json().then((data: PyGeoAPICollectionsCollectionResponsePayload) => {
-                        // Resolve
-                        resolve(data);
-                    }).catch((err) => {
-                        console.log(err);
-                        reject("Invalid response returned by the server.");
-                    });
-                }
-
-                else {
-                    console.log("Invalid request for wkt: " + response.status);
-                        reject("The server couldn't find the WKT for the collection.");
-                }
-            }).catch((error) => {
-                console.log(error);
-                reject("Failed to communicate with the server to get WKT for the collection: " + collection.title);
-            });
-        });
-
-        // Return the promise
-        return promise;
-    };
-
-    // static getCoverageAsync = async (collection: PyGeoAPICollectionsCollectionResponsePayload, geom_wkt: any, crs: number) => {
-    //     let url = URL_COVERAGE_EXTRACT.replace("{collectionId}", collection.id);
-    //     if (geom_wkt)
-    //         url += "&geom=" + geom_wkt + "&geom-crs=" + crs;
-    //     let promise = new Promise<PyGeoAPIRecordsResponsePayload>((resolve, reject) => {
-    //         fetch(url, {
-    //             headers: {
-    //                 'Accept': 'application/json',
-    //                 'Content-Type': 'application/json'
-    //             },
-    //             method: "GET"
-    //         }).then((response) => {
-    //             // Only process valid response
-    //             if (response.status === 200) {
-    //                 response.json().then((data: PyGeoAPIRecordsDataResponsePayload) => {
-    //                     // Resolve
-    //                     resolve({
-    //                         collection: collection,
-    //                         data: data
-    //                     });
-    //                 });
-    //             }
-
-    //             else {
-    //                 // If too large (413)
-    //                 if (response.status == 413) {
-    //                     alert("Your extraction area is too big for collection " + collection.title + ". Please use an extraction area less than 1,000 square kilometers.");
-    //                 }
-
-    //                 else {
-    //                     alert("failed getCoverage");
-    //                 }
-    //                 console.log(response, collection);
-    //                 reject("failed");
-    //             }
-    //         }).catch((error) => {
-    //             debugger;
-    //             alert("failed getCoverage");
-    //             console.log(error);
-    //             reject(error);
-    //         });
-    //     });
-
-    //     // Return the promise
-    //     return promise;
-    // };
+      console.log(`Invalid request for wkt: ${response.status}`);
+      throw Error("The server couldn't find the WKT for the collection.");
+    } catch (err) {
+      console.log(err);
+      throw Error(`Failed to communicate with the server to get WKT for the collection: ${collection.title}`);
+    }
+  };
 }

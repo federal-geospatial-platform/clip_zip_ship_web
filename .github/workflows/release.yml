@@ -29,13 +29,6 @@ jobs:
         run: zip -r dist.zip .
         working-directory: dist
 
-      #- name: Echo output
-      #  run: echo ${{steps.download.outputs.download-path}}
-      
-      #- name: Display structure of downloaded files
-      #  run: ls -R
-      #  working-directory: ${{steps.download.outputs.download-path}}
-
       # Add the zipped file to the release
       - name: Add the zipped file to the release
         uses: softprops/action-gh-release@v1

@@ -1,0 +1,28 @@
+name: Update Release Version in app.tsx file
+on:
+  workflow_dispatch:
+  create:
+    tags:
+      - 'v*'
+
+env:
+  TAG_NAME: ${{ github.ref_name }}
+
+jobs:
+  update_release_version:
+    runs-on: ubuntu-latest
+    steps:      
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Update Release Version
+      run: |
+        cd src
+        # Replace the version in app.tsx file
+        find . -type f -name "app.tsx" -exec sed -i "/title: 'Clip Zip Ship/s/: 'Clip Zip Ship.*/: 'Clip Zip Ship $my_var',/" {} +
+
+    - name: Commit and Push changes
+      run: |
+        git config user.name "GitHub Actions"
+        git commit -a -m "Updated release version to "${TAG_NAME}" in app.tsx files"
+        git push origin HEAD:$TAG_NAME --force

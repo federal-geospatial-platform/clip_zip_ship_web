@@ -55,6 +55,8 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
     ListItem,
     ListItemText,
     ListItemIcon,
+    Select,
+    TypeMenuItemProps,
   } = ui.elements;
   const {
     mapId,
@@ -280,8 +282,8 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
   }
 
   function handleExtractFeatures(): void {
-    const txtOutCrs: typeof TextField = document.getElementById('czs_out_crs');
-    onExtractFeatures?.(email, parseInt(txtOutCrs.value, 10));
+    const selectOutCrs: typeof Select = document.getElementById('czs_out_crs');
+    onExtractFeatures?.(email, parseInt(selectOutCrs.innerText, 10));
   }
 
   function handleMenuMore(e: Event, coll: PyGeoAPICollectionsCollectionResponsePayload): void {
@@ -500,6 +502,13 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
     );
   }
 
+  // Create the menu items
+  const menuItems: (typeof TypeMenuItemProps)[] = [];
+  ['<source>', ...PROJECTIONS].forEach((epsg: number | string) => {
+    const v = epsg !== '<source>' ? epsg : undefined;
+    menuItems.push({ key: epsg, item: { value: v, children: epsg } });
+  });
+
   // Return Panel UI
   return (
     <Box sx={sxClasses.panel}>
@@ -541,7 +550,7 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
         />
       </Box>
 
-      <Box sx={{ marginTop: 20 }}>
+      <Box sx={{ marginTop: '20px' }}>
         <Box title={t('czs.email_tooltip')} aria-label={t('czs.email_tooltip')}>
           Email:
         </Box>
@@ -558,18 +567,14 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
         />
       </Box>
 
-      <Box sx={{ marginTop: 20 }}>
-        <Box title={t('czs.projection_tooltip')} aria-label={t('czs.projection_tooltip')}>
-          EPSG projection:
-        </Box>
-        <TextField
+      <Box sx={{ marginTop: '20px' }}>
+        <Select
           id="czs_out_crs"
-          sx={sxClasses.inputField}
-          type="number"
-          tooltip={t('czs.projection_tooltip')}
+          label={t('czs.projection_title')}
+          tooltip={t('czs.projection_tooltip')} // GeoView Core Select component not supporting tooltips at the time of coding, but writing it still..
           tooltipPlacement="right"
-          // placeholder={3978}
-          style={{ width: '100%' }}
+          menuItems={menuItems}
+          fullWidth
         />
       </Box>
 

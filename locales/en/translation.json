@@ -22,6 +22,7 @@
     "feedback_title": "Send us your comments/questions",
     "feedback_text": "You want to contribute and provide feedback?<br/><br/>Contact us: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca</a>",
     "email_tooltip": "Enter the email on which to receive your download package link",
+    "projection_title": "EPSG Projection",
     "projection_tooltip": "Optionally, specify an EPSG number for the extracted data",
     "draw_tooltip": "Click to draw an extraction area on the map",
     "clear_tooltip": "Click to clear the drawing from the map",

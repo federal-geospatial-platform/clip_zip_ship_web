@@ -87,6 +87,9 @@ export const sxClasses = {
       fontSize: '1rem',
     },
   },
+  selectField: {
+    width: '100%',
+  },
   accordionTheme: {
     '& ul': {
       // cursor: 'pointer',

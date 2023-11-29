@@ -1,1 +1,1 @@
-const PYGEOAPI_URL_ROOT="https://api.czs-dev.services.geo.ca",QGIS_SERVICE_URL_ROOT="https://qgis-dev.services.geo.ca/ows/";
+const PYGEOAPI_URL_ROOT="https://api.czs-dev.services.geo.ca",QGIS_SERVICE_URL_ROOT="https://qgis-dev.services.geo.ca/ows/",PROJECTIONS=[3857,3978,3979,4269,4326,4617];

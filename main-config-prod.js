@@ -1,1 +1,1 @@
-const PYGEOAPI_URL_ROOT="https://czs-pygeoapi.ddr.services.geo.ca",QGIS_SERVICE_URL_ROOT="https://qgis-stage.services.geo.ca/dev/";
+const PYGEOAPI_URL_ROOT="https://czs-pygeoapi.ddr.services.geo.ca",QGIS_SERVICE_URL_ROOT="https://qgis-stage.services.geo.ca/dev/",PROJECTIONS=[3857,3978,3979,4269,4326,4617];

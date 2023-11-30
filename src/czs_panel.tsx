@@ -88,6 +88,7 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
   const [isLoadingFeatures, _setIsLoadingFeatures] = useState(false);
   const [isOrderLoading, _setIsOrderLoading] = useState([]);
   // const [isExtracting, _setIsExtracting] = useState(false);
+  const [outCrs, _setOutCrs] = useState() as [number | undefined, React.Dispatch<number | undefined>];
 
   // Effect hook to add and remove event listeners
   useEffect(() => {
@@ -282,8 +283,8 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
   }
 
   function handleExtractFeatures(): void {
-    const selectOutCrs: typeof Select = document.getElementById('czs_out_crs');
-    onExtractFeatures?.(email, parseInt(selectOutCrs.innerText, 10));
+    // Callback
+    onExtractFeatures?.(email, outCrs);
   }
 
   function handleMenuMore(e: Event, coll: PyGeoAPICollectionsCollectionResponsePayload): void {
@@ -329,6 +330,10 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
   function handleCloseContextMenu(): void {
     // Close popup
     setAnchorEl(null);
+  }
+
+  function handleOutCrsChanged(value: number | undefined): void {
+    _setOutCrs(value);
   }
 
   function getParentsHasChecked(themeColl: ThemeCollections): ParentCollections[] {
@@ -504,9 +509,8 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
 
   // Create the menu items
   const menuItems: (typeof TypeMenuItemProps)[] = [];
-  ['<source>', ...PROJECTIONS].forEach((epsg: number | string) => {
-    const v = epsg !== '<source>' ? epsg : undefined;
-    menuItems.push({ key: epsg, item: { value: v, children: epsg } });
+  [{ label: t('czs.project_source'), value: undefined }, ...PROJECTIONS].forEach((proj: { label: string; value: number | undefined }) => {
+    menuItems.push({ key: proj.value, item: { value: proj.value, children: proj.label } });
   });
 
   // Return Panel UI
@@ -573,6 +577,9 @@ function CZSPanel(props: CZSPanelProps): JSX.Element {
           label={t('czs.projection_title')}
           tooltip={t('czs.projection_tooltip')} // GeoView Core Select component not supporting tooltips at the time of coding, but writing it still..
           tooltipPlacement="right"
+          value={outCrs}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          onChange={(e: Event) => handleOutCrsChanged((e.target as any).value)}
           menuItems={menuItems}
           fullWidth
         />

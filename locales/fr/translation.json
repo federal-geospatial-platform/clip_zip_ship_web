@@ -23,8 +23,9 @@
     "feedback_title": "Envoyez-nous vos commentaires/questions",
     "feedback_text": "Vous voulez contribuer et nous fournir votre rétro-action?<br/><br/>Contactez-nous: <a href='mailto:geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca'>geodiscoverydatadissemination-diffusiondesdonneesgeodecouverte@nrcan-rncan.gc.ca</a>",
     "email_tooltip": "Inscrivez le courriel où recevoir votre lien de téléchargement pour votre extraction",
-    "projection_title": "Projection EPSG",
+    "projection_title": "Système de coordonnées",
     "projection_tooltip": "Optionallement, spécifiez un numéro EPSG pour les données extraites",
+    "project_source": "Non spécifié (système de coordonnées de la source)",
     "draw_tooltip": "Cliquez pour dessiner une aire d'extraction sur la carte",
     "clear_tooltip": "Cliquez pour supprimer le dessin sur la carte",
     "extract_tooltip": "Cliquez pour démarrer l'extraction des données"
